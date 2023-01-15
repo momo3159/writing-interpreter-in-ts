@@ -2,6 +2,7 @@ import {
   ASTExpression,
   ASTExpressionStatement,
   ASTIdentifier,
+  ASTIntegerLiteral,
   ASTLetStatement,
   ASTReturnStatement,
   ASTStatement,
@@ -13,6 +14,7 @@ import {
   EOF,
   IDENT,
   ILLEGAL,
+  INT,
   LET,
   RETURN,
   SEMICOLON,
@@ -21,8 +23,8 @@ import {
 } from "../token/token";
 import { iota } from "../util/iota";
 
-export type PrefixParseFn = () => ASTExpression;
-export type InfixParseFn = (leftValue: ASTExpression) => ASTExpression;
+export type PrefixParseFn = () => ASTExpression | null;
+export type InfixParseFn = (leftValue: ASTExpression) => ASTExpression | null;
 
 const { LOWEST, EQUALS, LESSGREATER, SUM, PRODUCT, PREFIX, CALL } = iota();
 
@@ -40,7 +42,9 @@ export class Parser {
     this.nextToken();
     this.nextToken();
 
+    // IDENTとINTは演算子ではないが，便宜上このような形で実装する
     this.registerPrefix(IDENT, this.parseIdentifier);
+    this.registerPrefix(INT, this.parseIntegerLiteral);
   }
 
   nextToken() {
@@ -129,6 +133,16 @@ export class Parser {
 
   parseIdentifier = (): ASTExpression => {
     return new ASTIdentifier(this.curToken, this.curToken.literal);
+  };
+
+  parseIntegerLiteral = (): ASTIntegerLiteral | null => {
+    const literal = this.curToken.literal;
+    const value = Number(literal);
+    if (Number.isNaN(value)) {
+      this.errors.push(`could not parse ${this.curToken.literal} as integer`);
+      return null;
+    }
+    return new ASTIntegerLiteral(this.curToken, value);
   };
 
   curTokenIs(tk: TokenKind) {

@@ -4,6 +4,7 @@ import {
   ASTLetStatement,
   ASTReturnStatement,
   ASTStatement,
+  ASTIntegerLiteral,
   Program,
 } from "../../ast/ast";
 import { Lexer } from "../../lexer/lexer";
@@ -67,6 +68,24 @@ describe("parser", () => {
     const ident = stmt.expression as ASTIdentifier;
     expect(ident.value).toBe("foobar");
     expect(ident.tokenLiteral()).toBe("foobar");
+  });
+
+  test("整数リテラルの解析", () => {
+    const input = "5;";
+    const l = new Lexer(input);
+    const p = new Parser(l);
+    const program = p.parseProgram();
+    checkParserErrors(p);
+
+    expect(program.statements.length).toBe(1);
+    expect(program.statements[0] instanceof ASTExpressionStatement).toBe(true);
+
+    const stmt = program.statements[0] as ASTExpressionStatement;
+    expect(stmt.expression instanceof ASTIntegerLiteral).toBe(true);
+
+    const ident = stmt.expression as ASTIntegerLiteral;
+    expect(ident.value).toBe(5);
+    expect(ident.tokenLiteral()).toBe("5");
   });
 
   test("String", () => {

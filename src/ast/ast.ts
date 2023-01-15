@@ -121,3 +121,22 @@ export class ASTIdentifier implements ASTExpression {
     return this.value;
   }
 }
+
+export class ASTIntegerLiteral implements ASTExpression {
+  token: Token;
+  value: number;
+
+  constructor(token: Token, value: number) {
+    this.token = token;
+    this.value = value;
+  }
+
+  expressionNode(): void {}
+
+  tokenLiteral(): string {
+    return this.token.literal;
+  }
+  String(): string {
+    return this.token.literal;
+  }
+}
