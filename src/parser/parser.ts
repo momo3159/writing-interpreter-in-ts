@@ -161,7 +161,7 @@ export class Parser {
       return null;
     }
 
-    let leftExp = prefix();
+    let leftExp = prefix(); // 今まで構文解析した式
     if (leftExp === null) {
       return null;
     }

@@ -150,9 +150,7 @@ describe("parser", () => {
       expect(stmt.expression instanceof ASTInfixExpression).toBe(true);
 
       const exp = stmt.expression as ASTInfixExpression;
-      testIntegerLiteral(exp.left as ASTExpression, tt.leftValue);
-      expect(exp.operator).toBe(tt.operator);
-      testIntegerLiteral(exp.right as ASTExpression, tt.rightValue);
+      testInfixExpression(exp, tt.leftValue, tt.operator, tt.rightValue);
     });
   });
 
@@ -180,12 +178,47 @@ const testLetStatement = (s: ASTStatement, name: string): void => {
   expect(letStmt.name?.tokenLiteral()).toBe(name);
 };
 
-const testIntegerLiteral = (s: ASTExpression, value: number) => {
+const testIntegerLiteral = (s: ASTExpression | null, value: number) => {
   expect(s instanceof ASTIntegerLiteral).toBe(true);
   const integ = s as ASTIntegerLiteral;
 
   expect(integ.value).toBe(value);
   expect(integ.tokenLiteral()).toBe(value.toString());
+};
+
+const testIdentifier = (exp: ASTExpression | null, value: string) => {
+  expect(exp instanceof ASTIdentifier).toBe(true);
+  const ident = exp as ASTIdentifier;
+
+  expect(ident.value).toBe(value);
+  expect(ident.tokenLiteral()).toBe(value);
+};
+
+const testLiteralExpression = (exp: ASTExpression | null, expected: any) => {
+  switch (typeof expected) {
+    case "number":
+      testIntegerLiteral(exp, expected as number);
+      break;
+    case "string":
+      testIdentifier(exp, expected as string);
+      break;
+    default:
+      throw new Error(`invalid literal`);
+  }
+};
+
+const testInfixExpression = (
+  exp: ASTExpression,
+  left: any,
+  operator: string,
+  right: any
+) => {
+  expect(exp instanceof ASTInfixExpression).toBe(true);
+  const opExp = exp as ASTInfixExpression;
+
+  testLiteralExpression(opExp.left, left);
+  expect(opExp.operator).toBe(operator);
+  testLiteralExpression(opExp.right, right);
 };
 
 const checkParserErrors = (p: Parser) => {
