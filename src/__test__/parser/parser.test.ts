@@ -25,16 +25,16 @@ describe("parser", () => {
     const program = p.parseProgram();
     checkParserErrors(p);
 
-    const tests: { expectedIdentifer: string }[] = [
-      { expectedIdentifer: "x" },
-      { expectedIdentifer: "y" },
-      { expectedIdentifer: "foobar" },
+    const tests: { expectedIdentifier: string }[] = [
+      { expectedIdentifier: "x" },
+      { expectedIdentifier: "y" },
+      { expectedIdentifier: "foobar" },
     ];
 
     expect(program.statements.length).toBe(3);
     tests.forEach((tt, i) => {
       const stmt = program.statements[i];
-      testLetStatement(stmt, tests[i].expectedIdentifer);
+      testLetStatement(stmt, tests[i].expectedIdentifier);
     });
   });
 
