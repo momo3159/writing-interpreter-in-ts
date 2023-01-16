@@ -6,6 +6,8 @@ import {
   ASTStatement,
   ASTIntegerLiteral,
   Program,
+  ASTExpression,
+  ASTPrefixExpression,
 } from "../../ast/ast";
 import { Lexer } from "../../lexer/lexer";
 import { Parser } from "../../parser/parser";
@@ -88,6 +90,32 @@ describe("parser", () => {
     expect(ident.tokenLiteral()).toBe("5");
   });
 
+  test("前置演算子の解析", () => {
+    const tests: { input: string; operator: string; integerValue: number }[] = [
+      { input: "!5", operator: "!", integerValue: 5 },
+      { input: "-15", operator: "-", integerValue: 15 },
+    ];
+
+    tests.forEach((tt) => {
+      const l = new Lexer(tt.input);
+      const p = new Parser(l);
+      const program = p.parseProgram();
+      checkParserErrors(p);
+
+      expect(program.statements.length).toBe(1);
+      expect(program.statements[0] instanceof ASTExpressionStatement).toBe(
+        true
+      );
+
+      const stmt = program.statements[0] as ASTExpressionStatement;
+      expect(stmt.expression instanceof ASTPrefixExpression).toBe(true);
+
+      const exp = stmt.expression as ASTPrefixExpression;
+      expect(exp.right).not.toBe(null);
+
+      testIntegerLiteral(exp.right as ASTExpression, tt.integerValue);
+    });
+  });
   test("String", () => {
     const program = new Program();
     program.statements = [
@@ -110,6 +138,14 @@ const testLetStatement = (s: ASTStatement, name: string): void => {
 
   expect(letStmt.name?.value).toBe(name);
   expect(letStmt.name?.tokenLiteral()).toBe(name);
+};
+
+const testIntegerLiteral = (s: ASTExpression, value: number) => {
+  expect(s instanceof ASTIntegerLiteral).toBe(true);
+  const integ = s as ASTIntegerLiteral;
+
+  expect(integ.value).toBe(value);
+  expect(integ.tokenLiteral()).toBe(value.toString());
 };
 
 const checkParserErrors = (p: Parser) => {

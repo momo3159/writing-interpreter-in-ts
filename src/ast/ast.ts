@@ -140,3 +140,29 @@ export class ASTIntegerLiteral implements ASTExpression {
     return this.token.literal;
   }
 }
+
+export class ASTPrefixExpression implements ASTExpression {
+  token: Token;
+  operator: string;
+  right: ASTExpression | null;
+
+  constructor(
+    token: Token,
+    operator: string,
+    right: ASTExpression | null = null
+  ) {
+    this.token = token;
+    this.operator = operator;
+    this.right = right;
+  }
+
+  expressionNode(): void {}
+
+  tokenLiteral(): string {
+    return this.token.literal;
+  }
+
+  String(): string {
+    return `(${this.operator} ${this.right?.String()})`;
+  }
+}

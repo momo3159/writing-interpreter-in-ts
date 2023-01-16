@@ -4,6 +4,7 @@ import {
   ASTIdentifier,
   ASTIntegerLiteral,
   ASTLetStatement,
+  ASTPrefixExpression,
   ASTReturnStatement,
   ASTStatement,
   Program,
@@ -20,6 +21,8 @@ import {
   SEMICOLON,
   Token,
   TokenKind,
+  BANG,
+  MINUS,
 } from "../token/token";
 import { iota } from "../util/iota";
 
@@ -45,6 +48,8 @@ export class Parser {
     // IDENTとINTは演算子ではないが，便宜上このような形で実装する
     this.registerPrefix(IDENT, this.parseIdentifier);
     this.registerPrefix(INT, this.parseIntegerLiteral);
+    this.registerPrefix(BANG, this.parsePrefixExpression);
+    this.registerPrefix(MINUS, this.parsePrefixExpression);
   }
 
   nextToken() {
@@ -124,9 +129,11 @@ export class Parser {
 
   parseExpression(precedence: number): ASTExpression | null {
     const prefix = this.prefixParseFns.get(this.curToken.kind);
-    console.log(prefix);
-    if (!prefix) return null;
 
+    if (!prefix) {
+      this.noPrefixParseFnError(this.curToken.kind);
+      return null;
+    }
     const leftExp = prefix();
     return leftExp;
   }
@@ -143,6 +150,14 @@ export class Parser {
       return null;
     }
     return new ASTIntegerLiteral(this.curToken, value);
+  };
+
+  parsePrefixExpression = (): ASTExpression | null => {
+    const exp = new ASTPrefixExpression(this.curToken, this.curToken.literal);
+    this.nextToken();
+
+    exp.right = this.parseExpression(PREFIX);
+    return exp;
   };
 
   curTokenIs(tk: TokenKind) {
@@ -178,5 +193,10 @@ export class Parser {
 
   registerInfix(tt: TokenKind, fn: InfixParseFn) {
     this.infixParseFns.set(tt, fn);
+  }
+
+  noPrefixParseFnError(tt: TokenKind) {
+    const msg = `no prefix parse function for ${tt} found`;
+    this.errors.push(msg);
   }
 }
