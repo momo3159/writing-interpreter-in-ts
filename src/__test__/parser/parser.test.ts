@@ -8,6 +8,7 @@ import {
   Program,
   ASTExpression,
   ASTPrefixExpression,
+  ASTInfixExpression,
 } from "../../ast/ast";
 import { Lexer } from "../../lexer/lexer";
 import { Parser } from "../../parser/parser";
@@ -116,6 +117,45 @@ describe("parser", () => {
       testIntegerLiteral(exp.right as ASTExpression, tt.integerValue);
     });
   });
+
+  test("中値演算子の解析", () => {
+    const tests: {
+      input: string;
+      leftValue: number;
+      operator: string;
+      rightValue: number;
+    }[] = [
+      { input: "5 + 5;", leftValue: 5, operator: "+", rightValue: 5 },
+      { input: "5 - 5;", leftValue: 5, operator: "-", rightValue: 5 },
+      { input: "5 * 5;", leftValue: 5, operator: "*", rightValue: 5 },
+      { input: "5 / 5;", leftValue: 5, operator: "/", rightValue: 5 },
+      { input: "5 > 5;", leftValue: 5, operator: ">", rightValue: 5 },
+      { input: "5 < 5;", leftValue: 5, operator: "<", rightValue: 5 },
+      { input: "5 == 5;", leftValue: 5, operator: "==", rightValue: 5 },
+      { input: "5 !=5;", leftValue: 5, operator: "!=", rightValue: 5 },
+    ];
+
+    tests.forEach((tt) => {
+      const l = new Lexer(tt.input);
+      const p = new Parser(l);
+      const program = p.parseProgram();
+      checkParserErrors(p);
+
+      expect(program.statements.length).toBe(1);
+      expect(program.statements[0] instanceof ASTExpressionStatement).toBe(
+        true
+      );
+
+      const stmt = program.statements[0] as ASTExpressionStatement;
+      expect(stmt.expression instanceof ASTInfixExpression).toBe(true);
+
+      const exp = stmt.expression as ASTInfixExpression;
+      testIntegerLiteral(exp.left as ASTExpression, tt.leftValue);
+      expect(exp.operator).toBe(tt.operator);
+      testIntegerLiteral(exp.right as ASTExpression, tt.rightValue);
+    });
+  });
+
   test("String", () => {
     const program = new Program();
     program.statements = [

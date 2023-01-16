@@ -2,6 +2,7 @@ import {
   ASTExpression,
   ASTExpressionStatement,
   ASTIdentifier,
+  ASTInfixExpression,
   ASTIntegerLiteral,
   ASTLetStatement,
   ASTPrefixExpression,
@@ -23,6 +24,13 @@ import {
   TokenKind,
   BANG,
   MINUS,
+  EQ,
+  NOT_EQ,
+  LT,
+  GT,
+  PLUS,
+  SLASH,
+  ASTERISK,
 } from "../token/token";
 import { iota } from "../util/iota";
 
@@ -30,6 +38,16 @@ export type PrefixParseFn = () => ASTExpression | null;
 export type InfixParseFn = (leftValue: ASTExpression) => ASTExpression | null;
 
 const { LOWEST, EQUALS, LESSGREATER, SUM, PRODUCT, PREFIX, CALL } = iota();
+const PRECEDENCES: ReadonlyMap<TokenKind, number> = new Map([
+  [EQ, EQUALS],
+  [NOT_EQ, EQUALS],
+  [LT, LESSGREATER],
+  [GT, LESSGREATER],
+  [PLUS, SUM],
+  [MINUS, SUM],
+  [SLASH, PRODUCT],
+  [ASTERISK, PRODUCT],
+]);
 
 export class Parser {
   l: Lexer;
@@ -50,6 +68,15 @@ export class Parser {
     this.registerPrefix(INT, this.parseIntegerLiteral);
     this.registerPrefix(BANG, this.parsePrefixExpression);
     this.registerPrefix(MINUS, this.parsePrefixExpression);
+
+    this.registerInfix(PLUS, this.parseInfixExpression);
+    this.registerInfix(MINUS, this.parseInfixExpression);
+    this.registerInfix(SLASH, this.parseInfixExpression);
+    this.registerInfix(ASTERISK, this.parseInfixExpression);
+    this.registerInfix(EQ, this.parseInfixExpression);
+    this.registerInfix(NOT_EQ, this.parseInfixExpression);
+    this.registerInfix(LT, this.parseInfixExpression);
+    this.registerInfix(GT, this.parseInfixExpression);
   }
 
   nextToken() {
@@ -129,12 +156,25 @@ export class Parser {
 
   parseExpression(precedence: number): ASTExpression | null {
     const prefix = this.prefixParseFns.get(this.curToken.kind);
-
     if (!prefix) {
       this.noPrefixParseFnError(this.curToken.kind);
       return null;
     }
-    const leftExp = prefix();
+
+    let leftExp = prefix();
+    if (leftExp === null) {
+      return null;
+    }
+
+    while (!this.peekTokenIs(SEMICOLON) && precedence < this.peekPrecedence()) {
+      const infix = this.infixParseFns.get(this.peekToken.kind);
+      if (infix === undefined) return leftExp;
+
+      this.nextToken();
+
+      leftExp = infix(leftExp as ASTExpression);
+    }
+
     return leftExp;
   }
 
@@ -199,4 +239,32 @@ export class Parser {
     const msg = `no prefix parse function for ${tt} found`;
     this.errors.push(msg);
   }
+
+  curPrecedence(): number {
+    const p = PRECEDENCES.get(this.curToken.kind);
+
+    if (p !== undefined) return p;
+    else return LOWEST;
+  }
+
+  peekPrecedence(): number {
+    const p = PRECEDENCES.get(this.peekToken.kind);
+
+    if (p !== undefined) return p;
+    else return LOWEST;
+  }
+
+  parseInfixExpression = (left: ASTExpression): ASTExpression | null => {
+    const exp = new ASTInfixExpression(
+      this.curToken,
+      this.curToken.literal,
+      left
+    );
+
+    const precedence = this.curPrecedence();
+    this.nextToken();
+    exp.right = this.parseExpression(precedence);
+
+    return exp;
+  };
 }

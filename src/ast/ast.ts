@@ -166,3 +166,32 @@ export class ASTPrefixExpression implements ASTExpression {
     return `(${this.operator} ${this.right?.String()})`;
   }
 }
+
+export class ASTInfixExpression implements ASTExpression {
+  token: Token;
+  left: ASTExpression;
+  operator: string;
+  right: ASTExpression | null;
+
+  constructor(
+    token: Token,
+    operator: string,
+    left: ASTExpression,
+    right: ASTExpression | null = null
+  ) {
+    this.token = token;
+    this.operator = operator;
+    this.left = left;
+    this.right = right;
+  }
+
+  expressionNode(): void {}
+
+  tokenLiteral(): string {
+    return this.token.literal;
+  }
+
+  String(): string {
+    return `(${this.left?.String()} ${this.operator} ${this.right?.String})`;
+  }
+}
