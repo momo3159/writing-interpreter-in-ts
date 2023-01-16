@@ -118,9 +118,10 @@ describe("parser", () => {
   });
 
   test("前置演算子の解析", () => {
-    const tests: { input: string; operator: string; integerValue: number }[] = [
-      { input: "!5", operator: "!", integerValue: 5 },
-      { input: "-15", operator: "-", integerValue: 15 },
+    const tests: { input: string; operator: string; value: any }[] = [
+      { input: "!5", operator: "!", value: 5 },
+      { input: "-15", operator: "-", value: 15 },
+      { input: "!true;", operator: "!", value: true },
     ];
 
     tests.forEach((tt) => {
@@ -140,7 +141,7 @@ describe("parser", () => {
       const exp = stmt.expression as ASTPrefixExpression;
       expect(exp.right).not.toBe(null);
 
-      testIntegerLiteral(exp.right as ASTExpression, tt.integerValue);
+      testLiteralExpression(exp.right as ASTExpression, tt.value);
     });
   });
 
