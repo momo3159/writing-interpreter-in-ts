@@ -1,4 +1,5 @@
 import {
+  ASTBooleanLiteral,
   ASTExpression,
   ASTExpressionStatement,
   ASTIdentifier,
@@ -31,6 +32,8 @@ import {
   PLUS,
   SLASH,
   ASTERISK,
+  TRUE,
+  FALSE,
 } from "../token/token";
 import { iota } from "../util/iota";
 
@@ -68,6 +71,8 @@ export class Parser {
     this.registerPrefix(INT, this.parseIntegerLiteral);
     this.registerPrefix(BANG, this.parsePrefixExpression);
     this.registerPrefix(MINUS, this.parsePrefixExpression);
+    this.registerPrefix(TRUE, this.parseBooleanLiteral);
+    this.registerPrefix(FALSE, this.parseBooleanLiteral);
 
     this.registerInfix(PLUS, this.parseInfixExpression);
     this.registerInfix(MINUS, this.parseInfixExpression);
@@ -265,6 +270,11 @@ export class Parser {
     this.nextToken();
     exp.right = this.parseExpression(precedence);
 
+    return exp;
+  };
+
+  parseBooleanLiteral = (): ASTExpression => {
+    const exp = new ASTBooleanLiteral(this.curToken, this.curTokenIs(TRUE));
     return exp;
   };
 }

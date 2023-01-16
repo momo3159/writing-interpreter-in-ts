@@ -192,6 +192,24 @@ export class ASTInfixExpression implements ASTExpression {
   }
 
   String(): string {
-    return `(${this.left?.String()} ${this.operator} ${this.right?.String})`;
+    return `(${this.left?.String()} ${this.operator} ${this.right?.String()})`;
+  }
+}
+
+export class ASTBooleanLiteral implements ASTExpression {
+  token: Token;
+  value: boolean;
+
+  constructor(token: Token, value: boolean) {
+    this.token = token;
+    this.value = value;
+  }
+
+  expressionNode(): void {}
+  tokenLiteral(): string {
+    return this.token.literal;
+  }
+  String(): string {
+    return this.token.literal;
   }
 }

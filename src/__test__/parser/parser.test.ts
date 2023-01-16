@@ -9,10 +9,11 @@ import {
   ASTExpression,
   ASTPrefixExpression,
   ASTInfixExpression,
+  ASTBooleanLiteral,
 } from "../../ast/ast";
 import { Lexer } from "../../lexer/lexer";
 import { Parser } from "../../parser/parser";
-import { IDENT, LET } from "../../token/token";
+import { IDENT, INT, LET } from "../../token/token";
 
 describe("parser", () => {
   test("let文の解析", () => {
@@ -91,6 +92,31 @@ describe("parser", () => {
     expect(ident.tokenLiteral()).toBe("5");
   });
 
+  test("真偽値リテラルの解析", () => {
+    const tests: { input: string; expectedBoolean: boolean }[] = [
+      { input: "true;", expectedBoolean: true },
+      { input: "false;", expectedBoolean: false },
+    ];
+
+    tests.forEach((tt) => {
+      const l = new Lexer(tt.input);
+      const p = new Parser(l);
+      const program = p.parseProgram();
+      checkParserErrors(p);
+
+      expect(program.statements.length).toBe(1);
+      expect(program.statements[0] instanceof ASTExpressionStatement).toBe(
+        true
+      );
+
+      const stmt = program.statements[0] as ASTExpressionStatement;
+      expect(stmt.expression instanceof ASTBooleanLiteral).toBe(true);
+
+      const b = stmt.expression as ASTBooleanLiteral;
+      expect(b.value).toBe(tt.expectedBoolean);
+    });
+  });
+
   test("前置演算子の解析", () => {
     const tests: { input: string; operator: string; integerValue: number }[] = [
       { input: "!5", operator: "!", integerValue: 5 },
@@ -121,9 +147,9 @@ describe("parser", () => {
   test("中値演算子の解析", () => {
     const tests: {
       input: string;
-      leftValue: number;
+      leftValue: any;
       operator: string;
-      rightValue: number;
+      rightValue: any;
     }[] = [
       { input: "5 + 5;", leftValue: 5, operator: "+", rightValue: 5 },
       { input: "5 - 5;", leftValue: 5, operator: "-", rightValue: 5 },
@@ -133,6 +159,18 @@ describe("parser", () => {
       { input: "5 < 5;", leftValue: 5, operator: "<", rightValue: 5 },
       { input: "5 == 5;", leftValue: 5, operator: "==", rightValue: 5 },
       { input: "5 !=5;", leftValue: 5, operator: "!=", rightValue: 5 },
+      {
+        input: "true == true",
+        leftValue: true,
+        operator: "==",
+        rightValue: true,
+      },
+      {
+        input: "true != false",
+        leftValue: true,
+        operator: "!=",
+        rightValue: false,
+      },
     ];
 
     tests.forEach((tt) => {
@@ -151,6 +189,24 @@ describe("parser", () => {
 
       const exp = stmt.expression as ASTInfixExpression;
       testInfixExpression(exp, tt.leftValue, tt.operator, tt.rightValue);
+    });
+  });
+
+  test("演算子の優先順位を反映した解析", () => {
+    const tests: { input: string; expected: string }[] = [
+      { input: "true", expected: "true" },
+      { input: "false", expected: "false" },
+      { input: "3 > 5 == false", expected: "((3 > 5) == false)" },
+      { input: "3 < 5 == true", expected: "((3 < 5) == true)" },
+    ];
+
+    tests.forEach((tt) => {
+      const l = new Lexer(tt.input);
+      const p = new Parser(l);
+      const program = p.parseProgram();
+      checkParserErrors(p);
+
+      expect(program.String()).toBe(tt.expected);
     });
   });
 
@@ -186,6 +242,14 @@ const testIntegerLiteral = (s: ASTExpression | null, value: number) => {
   expect(integ.tokenLiteral()).toBe(value.toString());
 };
 
+const testBooleanLiteral = (s: ASTExpression | null, value: boolean) => {
+  expect(s instanceof ASTBooleanLiteral).toBe(true);
+  const bool = s as ASTBooleanLiteral;
+
+  expect(bool.value).toBe(value);
+  expect(bool.tokenLiteral()).toBe(String(value));
+};
+
 const testIdentifier = (exp: ASTExpression | null, value: string) => {
   expect(exp instanceof ASTIdentifier).toBe(true);
   const ident = exp as ASTIdentifier;
@@ -201,6 +265,9 @@ const testLiteralExpression = (exp: ASTExpression | null, expected: any) => {
       break;
     case "string":
       testIdentifier(exp, expected as string);
+      break;
+    case "boolean":
+      testBooleanLiteral(exp, expected as boolean);
       break;
     default:
       throw new Error(`invalid literal`);
