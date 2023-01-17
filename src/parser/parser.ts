@@ -1,8 +1,10 @@
 import {
+  ASTBlockStatement,
   ASTBooleanLiteral,
   ASTExpression,
   ASTExpressionStatement,
   ASTIdentifier,
+  ASTIfExpression,
   ASTInfixExpression,
   ASTIntegerLiteral,
   ASTLetStatement,
@@ -36,6 +38,10 @@ import {
   FALSE,
   RPAREN,
   LPAREN,
+  IF,
+  LBRACE,
+  RBRACE,
+  ELSE,
 } from "../token/token";
 import { iota } from "../util/iota";
 
@@ -76,6 +82,7 @@ export class Parser {
     this.registerPrefix(TRUE, this.parseBooleanLiteral);
     this.registerPrefix(FALSE, this.parseBooleanLiteral);
     this.registerPrefix(LPAREN, this.parseGroupedExpression);
+    this.registerPrefix(IF, this.parseIfExpression);
 
     this.registerInfix(PLUS, this.parseInfixExpression);
     this.registerInfix(MINUS, this.parseInfixExpression);
@@ -291,4 +298,62 @@ export class Parser {
 
     return exp;
   };
+
+  parseIfExpression = (): ASTExpression | null => {
+    const ifToken = this.curToken;
+
+    if (!this.expectPeek(LPAREN)) {
+      return null;
+    }
+
+    this.nextToken();
+    const condition = this.parseExpression(LOWEST);
+
+    if (!this.expectPeek(RPAREN)) {
+      return null;
+    }
+
+    if (!this.expectPeek(LBRACE)) {
+      return null;
+    }
+
+    const consequence = this.parseBlockStatement();
+    if (this.peekTokenIs(ELSE)) {
+      this.nextToken();
+      if (!this.expectPeek(LBRACE)) {
+        return null;
+      }
+
+      const alternative = this.parseBlockStatement();
+      return new ASTIfExpression(ifToken, condition, consequence, alternative);
+    }
+
+    // if (!this.expectPeek(ELSE)) {
+    //   return new ASTIfExpression(ifToken, condition, consequence, null);
+    // }
+
+    // if (!this.expectPeek(LBRACE)) {
+    //   return null;
+    // }
+
+    // const alternative = this.parseBlockStatement();
+    // if (!this.expectPeek(RBRACE)) return null;
+
+    return new ASTIfExpression(ifToken, condition, consequence, null);
+  };
+
+  parseBlockStatement(): ASTBlockStatement | null {
+    const token = this.curToken;
+    const stmts: ASTStatement[] = [];
+
+    this.nextToken();
+
+    while (!this.curTokenIs(RBRACE) && !this.curTokenIs(EOF)) {
+      const stmt = this.parseStatement();
+      if (stmt !== null) stmts.push(stmt);
+      this.nextToken();
+    }
+
+    return new ASTBlockStatement(token, stmts);
+  }
 }

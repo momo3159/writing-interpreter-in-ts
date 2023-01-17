@@ -10,6 +10,8 @@ import {
   ASTPrefixExpression,
   ASTInfixExpression,
   ASTBooleanLiteral,
+  ASTIfExpression,
+  ASTBlockStatement,
 } from "../../ast/ast";
 import { Lexer } from "../../lexer/lexer";
 import { Parser } from "../../parser/parser";
@@ -218,6 +220,72 @@ describe("parser", () => {
 
       expect(program.String()).toBe(tt.expected);
     });
+  });
+
+  test("if式の解析", () => {
+    const input = "if (x < y) { x }";
+    const l = new Lexer(input);
+    const p = new Parser(l);
+    const program = p.parseProgram();
+    checkParserErrors(p);
+
+    expect(program.statements.length).toBe(1);
+    expect(program.statements[0] instanceof ASTExpressionStatement).toBe(true);
+
+    const stmt = program.statements[0] as ASTExpressionStatement;
+    expect(stmt.expression).not.toBe(null);
+
+    const exp = stmt.expression as ASTExpression;
+    expect(exp instanceof ASTIfExpression).toBe(true);
+
+    const ifExp = exp as ASTIfExpression;
+    expect(ifExp.condition).not.toBe(null);
+
+    testInfixExpression(ifExp.condition as ASTInfixExpression, "x", "<", "y");
+    expect(ifExp.consequence?.statements.length).toBe(1);
+
+    expect(
+      ifExp.consequence?.statements[0] instanceof ASTExpressionStatement
+    ).toBe(true);
+    const consequence = ifExp.consequence
+      ?.statements[0] as ASTExpressionStatement;
+
+    testIdentifier(consequence.expression, "x");
+    expect(ifExp.alternative).toBe(null);
+  });
+
+  test("if-else式の解析", () => {
+    const input = "if (x < y) { x } else { y }";
+    const l = new Lexer(input);
+    const p = new Parser(l);
+    const program = p.parseProgram();
+    checkParserErrors(p);
+
+    expect(program.statements.length).toBe(1);
+    expect(program.statements[0] instanceof ASTExpressionStatement).toBe(true);
+
+    const stmt = program.statements[0] as ASTExpressionStatement;
+    expect(stmt.expression).not.toBe(null);
+
+    const exp = stmt.expression as ASTExpression;
+    expect(exp instanceof ASTIfExpression).toBe(true);
+
+    const ifExp = exp as ASTIfExpression;
+    expect(ifExp.condition).not.toBe(null);
+
+    testInfixExpression(ifExp.condition as ASTInfixExpression, "x", "<", "y");
+    expect(ifExp.consequence?.statements.length).toBe(1);
+
+    expect(
+      ifExp.consequence?.statements[0] instanceof ASTExpressionStatement
+    ).toBe(true);
+    const consequence = ifExp.consequence
+      ?.statements[0] as ASTExpressionStatement;
+
+    testIdentifier(consequence.expression, "x");
+
+    const alt = ifExp.alternative?.statements[0] as ASTExpressionStatement;
+    testIdentifier(alt.expression, "y");
   });
 
   test("String", () => {

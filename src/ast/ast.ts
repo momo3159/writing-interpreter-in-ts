@@ -213,3 +213,51 @@ export class ASTBooleanLiteral implements ASTExpression {
     return this.token.literal;
   }
 }
+
+export class ASTIfExpression implements ASTExpression {
+  token: Token;
+  condition: ASTExpression | null;
+  consequence: ASTBlockStatement | null;
+  alternative: ASTBlockStatement | null;
+
+  constructor(
+    token: Token,
+    condition: ASTExpression | null = null,
+    consequence: ASTBlockStatement | null = null,
+    alternative: ASTBlockStatement | null = null
+  ) {
+    this.token = token;
+    this.condition = condition;
+    this.consequence = consequence;
+    this.alternative = alternative;
+  }
+
+  expressionNode(): void {}
+  tokenLiteral(): string {
+    return this.token.literal;
+  }
+  String(): string {
+    return `if ${this.condition?.String()} ${this.consequence?.String()} ${
+      this.alternative && "else" + this.alternative.String()
+    }`;
+  }
+}
+
+export class ASTBlockStatement implements ASTStatement {
+  token: Token;
+  statements: ASTStatement[];
+
+  constructor(token: Token, statements: ASTStatement[]) {
+    this.token = token;
+    this.statements = statements;
+  }
+
+  statementNode(): void {}
+  tokenLiteral(): string {
+    return this.token.literal;
+  }
+
+  String(): string {
+    return this.statements.map((st) => st.String()).join();
+  }
+}
