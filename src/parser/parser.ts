@@ -34,6 +34,8 @@ import {
   ASTERISK,
   TRUE,
   FALSE,
+  RPAREN,
+  LPAREN,
 } from "../token/token";
 import { iota } from "../util/iota";
 
@@ -73,6 +75,7 @@ export class Parser {
     this.registerPrefix(MINUS, this.parsePrefixExpression);
     this.registerPrefix(TRUE, this.parseBooleanLiteral);
     this.registerPrefix(FALSE, this.parseBooleanLiteral);
+    this.registerPrefix(LPAREN, this.parseGroupedExpression);
 
     this.registerInfix(PLUS, this.parseInfixExpression);
     this.registerInfix(MINUS, this.parseInfixExpression);
@@ -275,6 +278,17 @@ export class Parser {
 
   parseBooleanLiteral = (): ASTExpression => {
     const exp = new ASTBooleanLiteral(this.curToken, this.curTokenIs(TRUE));
+    return exp;
+  };
+
+  parseGroupedExpression = (): ASTExpression | null => {
+    this.nextToken();
+    const exp = this.parseExpression(LOWEST);
+
+    if (!this.expectPeek(RPAREN)) {
+      return null;
+    }
+
     return exp;
   };
 }

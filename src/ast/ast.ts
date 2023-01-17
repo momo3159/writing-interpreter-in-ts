@@ -163,7 +163,7 @@ export class ASTPrefixExpression implements ASTExpression {
   }
 
   String(): string {
-    return `(${this.operator} ${this.right?.String()})`;
+    return `(${this.operator}${this.right?.String()})`;
   }
 }
 

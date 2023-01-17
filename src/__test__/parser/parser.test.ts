@@ -199,6 +199,15 @@ describe("parser", () => {
       { input: "false", expected: "false" },
       { input: "3 > 5 == false", expected: "((3 > 5) == false)" },
       { input: "3 < 5 == true", expected: "((3 < 5) == true)" },
+      { input: "1 + (2 + 3) + 4", expected: "((1 + (2 + 3)) + 4)" },
+      {
+        input: "(5 + 5) * 2",
+        expected: "((5 + 5) * 2)",
+      },
+      {
+        input: "-(5 + 5)",
+        expected: "(-(5 + 5))", // ((-5) + 5)ではない
+      },
     ];
 
     tests.forEach((tt) => {
