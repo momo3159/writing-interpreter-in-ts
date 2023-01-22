@@ -1,4 +1,5 @@
 import * as fs from "fs";
+import { evaluate } from "../evaluator/evaluator";
 const readline = require("readline");
 import { Lexer } from "../lexer/lexer";
 import { Parser } from "../parser/parser";
@@ -18,12 +19,10 @@ export const start = async () => {
       continue;
     }
 
-    console.log(program.String());
-    // while (true) {
-    //   const tok = l.nextToken();
-    //   if (tok.kind === EOF) break;
-    //   console.log(tok);
-    // }
+    const evaluated = evaluate(program)
+    if (evaluated !== null) {
+      console.log(evaluated.inspect())
+    }
   }
 };
 
