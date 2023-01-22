@@ -148,11 +148,7 @@ export class Parser {
     // TODO: 式の解析
     this.nextToken();
     stmt.value = this.parseExpression(LOWEST);
-
-    while (!this.curTokenIs(SEMICOLON)) {
-      this.nextToken();
-    }
-
+    if (this.peekTokenIs(SEMICOLON)) this.nextToken();
     return stmt;
   }
 
@@ -161,10 +157,7 @@ export class Parser {
     this.nextToken();
 
     stmt.returnValue = this.parseExpression(LOWEST);
-    
-    while (!this.curTokenIs(SEMICOLON)) {
-      this.nextToken();
-    }
+    if (this.peekTokenIs(SEMICOLON)) this.nextToken();
 
     return stmt;
   }
