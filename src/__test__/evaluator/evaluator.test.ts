@@ -1,5 +1,5 @@
 import { Lexer } from "../../lexer/lexer";
-import { Boolean_, Integer, Object_ } from "../../object/object";
+import { Boolean_, Integer, Null, Object_ } from "../../object/object";
 import { Parser } from "../../parser/parser";
 import { evaluate } from "../../evaluator/evaluator";
 
@@ -80,6 +80,30 @@ test("!演算子の評価", () => {
   });
 });
 
+test("if-else式の評価", () => {
+  const tests = [
+    { input: "if (true) { 10 }", expected: 10 },
+    { input: "if (false) { 10 }", expected: null },
+    { input: "if (1) { 10 }", expected: 10 },
+    { input: "if (1 < 2) { 10 }", expected: 10 },
+    { input: "if (1 > 2) { 10 }", expected: null },
+    { input: "if (1 > 2) { 10 } else { 20 }", expected: 20 },
+    { input: "if (1 < 2) { 10 } else { 20 }", expected: 10 },
+  ];
+
+  tests.forEach(({ input, expected }, i) => {
+    const evaluated = testEval(input);
+    if (evaluated === null) throw new Error("null is invalid");
+
+    if (expected === null) {
+
+      testNullObject(evaluated);
+    } else {
+      testIntegerObject(evaluated, expected);
+    }
+  });
+});
+
 const testEval = (input: string): Object_ | null => {
   const l = new Lexer(input);
   const p = new Parser(l);
@@ -99,4 +123,8 @@ const testBooleanObject = (obj: Object_, expected: boolean) => {
   const result = obj as Boolean_;
 
   expect(result.value).toBe(expected);
+};
+
+const testNullObject = (obj: Object_) => {
+  expect(obj instanceof Null).toBe(true);
 };

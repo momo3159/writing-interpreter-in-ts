@@ -7,6 +7,9 @@ import {
   ASTBooleanLiteral,
   ASTPrefixExpression,
   ASTInfixExpression,
+  ASTIfExpression,
+  ASTBlockStatement,
+  ASTExpression,
 } from "../ast/ast";
 import {
   Boolean_,
@@ -39,6 +42,16 @@ export const evaluate = (node: ASTNode | null): Object_ | null => {
     if (right === null) return null;
 
     return evaluatePrefixExpression(node.operator, right);
+  }
+  if (node instanceof ASTIfExpression) {
+    const condition = node.condition;
+    const consequence = node.consequence;
+    const alternative = node.alternative;
+
+    return evaluateIfExpression(condition, consequence, alternative);
+  }
+  if (node instanceof ASTBlockStatement) {
+    return evaluateStatements(node.statements);
   }
   if (node instanceof ASTInfixExpression) {
     const left = evaluate(node.left);
@@ -132,13 +145,13 @@ const evalIntegerInfixExpression = (
     case "/":
       return new Integer(Math.floor(left.value / right.value));
     case "<":
-      return new Boolean_(left.value < right.value);
+      return nativeBoolToBoolObj(left.value < right.value);
     case ">":
-      return new Boolean_(left.value > right.value);
+      return nativeBoolToBoolObj(left.value > right.value);
     case "==":
-      return new Boolean_(left.value === right.value);
+      return nativeBoolToBoolObj(left.value === right.value);
     case "!=":
-      return new Boolean_(left.value !== right.value);
+      return nativeBoolToBoolObj(left.value !== right.value);
     default:
       return NULL;
   }
@@ -157,4 +170,36 @@ const evalBooleanInfixExpression = (
     default:
       return NULL;
   }
+};
+
+const evaluateIfExpression = (
+  condition: ASTExpression | null,
+  consequence: ASTBlockStatement | null,
+  alternative: ASTBlockStatement | null
+): Object_ | null => {
+  const conditionObj = evaluate(condition);
+
+  if (isTruthy(conditionObj)) {
+    return evaluate(consequence);
+  } else if (alternative !== null) {
+    return evaluate(alternative);
+  } else return NULL;
+};
+
+const isTruthy = (obj: Object_ | null): boolean => {
+  switch (obj) {
+    case NULL:
+      return false;
+    case TRUE:
+      return true;
+    case FALSE:
+      return false;
+    default:
+      return true;
+  }
+};
+
+const nativeBoolToBoolObj = (cond: boolean): Boolean_ => {
+  if (cond) return TRUE;
+  else return FALSE;
 };
