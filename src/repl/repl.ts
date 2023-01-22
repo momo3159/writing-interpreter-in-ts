@@ -1,6 +1,7 @@
 import * as fs from "fs";
 const readline = require("readline");
 import { Lexer } from "../lexer/lexer";
+import { Parser } from "../parser/parser";
 import { EOF, Token } from "../token/token";
 
 const PROMPT = ">> ";
@@ -9,12 +10,20 @@ export const start = async () => {
   while (true) {
     const input = await prompt();
     const l = new Lexer(input);
+    const p = new Parser(l);
 
-    while (true) {
-      const tok = l.nextToken();
-      if (tok.kind === EOF) break;
-      console.log(tok);
+    const program = p.parseProgram();
+    if (p.errors.length !== 0) {
+      printParserErrors(p.errors);
+      continue;
     }
+
+    console.log(program.String());
+    // while (true) {
+    //   const tok = l.nextToken();
+    //   if (tok.kind === EOF) break;
+    //   console.log(tok);
+    // }
   }
 };
 
@@ -35,4 +44,8 @@ const question = (question: string) => {
       rl.close();
     });
   });
+};
+
+const printParserErrors = (errors: string[]) => {
+  errors.forEach((error) => console.log(`¥t${error}`));
 };
