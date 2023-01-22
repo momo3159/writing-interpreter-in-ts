@@ -1,7 +1,7 @@
 export type ObjectType = "INTEGER" | "BOOLEAN" | "NULL";
-const INTEGER_OBJ: ObjectType = "INTEGER";
-const BOOLEAN_OBJ: ObjectType = "BOOLEAN";
-const NULL_OBJ: ObjectType = "NULL";
+export const INTEGER_OBJ: ObjectType = "INTEGER";
+export const BOOLEAN_OBJ: ObjectType = "BOOLEAN";
+export const NULL_OBJ: ObjectType = "NULL";
 
 export interface Object_ {
   type(): ObjectType;

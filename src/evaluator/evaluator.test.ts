@@ -50,6 +50,21 @@ test("!演算子の評価", () => {
   });
 });
 
+test("前置演算子「-」の評価", () => {
+  const tests = [
+    { input: "5", expected: 5 },
+    { input: "10", expected: 10 },
+    { input: "-5", expected: -5 },
+    { input: "-10", expected: -10 },
+  ];
+
+  tests.forEach(({ input, expected }) => {
+    const evaluated = testEval(input);
+    if (evaluated === null) throw new Error("null is invalid");
+    testIntegerObject(evaluated, expected);
+  });
+});
+
 const testEval = (input: string): Object_ | null => {
   const l = new Lexer(input);
   const p = new Parser(l);

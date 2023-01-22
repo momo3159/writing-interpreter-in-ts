@@ -7,7 +7,13 @@ import {
   ASTBooleanLiteral,
   ASTPrefixExpression,
 } from "../ast/ast";
-import { Boolean_, Integer, Null, Object_ } from "../object/object";
+import {
+  Boolean_,
+  Integer,
+  INTEGER_OBJ,
+  Null,
+  Object_,
+} from "../object/object";
 const TRUE = new Boolean_(true);
 const FALSE = new Boolean_(false);
 const NULL = new Null();
@@ -28,7 +34,7 @@ export const evaluate = (node: ASTNode | null): Object_ | null => {
   }
   if (node instanceof ASTPrefixExpression) {
     const right = evaluate(node.right);
-    if (right === null) throw new Error("null is invalid ");
+    if (right === null) return null;
 
     return evaluatePrefixExpression(node.operator, right);
   }
@@ -52,6 +58,8 @@ const evaluatePrefixExpression = (
   switch (operator) {
     case "!":
       return evalBangOperatorExpression(right);
+    case "-":
+      return evalMinusPrefixExpression(right);
     default:
       return NULL;
   }
@@ -68,4 +76,12 @@ const evalBangOperatorExpression = (right: Object_): Object_ => {
     default:
       return FALSE;
   }
+};
+
+const evalMinusPrefixExpression = (right: Object_): Object_ => {
+  if (right.type() !== INTEGER_OBJ) {
+    return NULL;
+  }
+  const value = (right as Integer).value;
+  return new Integer(-value);
 };
