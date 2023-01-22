@@ -4,8 +4,9 @@ import {
   Program,
   ASTExpressionStatement,
   ASTStatement,
+  ASTBooleanLiteral,
 } from "../ast/ast";
-import { Integer, Object_ } from "../object/object";
+import { Boolean_, Integer, Object_ } from "../object/object";
 
 export const evaluate = (node: ASTNode | null): Object_ | null => {
   if (node instanceof Program) {
@@ -16,6 +17,9 @@ export const evaluate = (node: ASTNode | null): Object_ | null => {
   }
   if (node instanceof ASTIntegerLiteral) {
     return new Integer(node.value);
+  }
+  if (node instanceof ASTBooleanLiteral) {
+    return new Boolean_(node.value);
   }
 
   return null;

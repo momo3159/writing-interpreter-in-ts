@@ -22,7 +22,7 @@ export class Integer implements Object_ {
   }
 }
 
-export class Boolean implements Object_ {
+export class Boolean_ implements Object_ {
   value: boolean;
   constructor(value: boolean) {
     this.value = value;
