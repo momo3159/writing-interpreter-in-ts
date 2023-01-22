@@ -12,6 +12,7 @@ import {
   ASTBooleanLiteral,
   ASTIfExpression,
   ASTBlockStatement,
+  ASTFunctionLiteral,
 } from "../../ast/ast";
 import { Lexer } from "../../lexer/lexer";
 import { Parser } from "../../parser/parser";
@@ -286,6 +287,58 @@ describe("parser", () => {
 
     const alt = ifExp.alternative?.statements[0] as ASTExpressionStatement;
     testIdentifier(alt.expression, "y");
+  });
+
+  test("関数リテラルの解析", () => {
+    const input = `fn(x, y) { x + y; }`;
+    const l = new Lexer(input);
+    const p = new Parser(l);
+    const program = p.parseProgram();
+    checkParserErrors(p);
+
+    expect(program.statements.length).toBe(1);
+    expect(program.statements[0] instanceof ASTExpressionStatement).toBe(true);
+
+    const stmt = program.statements[0] as ASTExpressionStatement;
+    expect(stmt.expression instanceof ASTFunctionLiteral).toBe(true);
+
+    const fl = stmt.expression as ASTFunctionLiteral;
+    expect(fl.parameters).not.toBe(null);
+
+    const parameters = fl.parameters as ASTIdentifier[];
+    expect(parameters.length).toBe(2);
+    testLiteralExpression(parameters[0], "x");
+    testLiteralExpression(parameters[1], "y");
+    const body = fl.body as ASTBlockStatement;
+    expect(body.statements.length).toBe(1);
+    expect(body.statements[0] instanceof ASTExpressionStatement).toBe(true);
+    const bodyExp = body.statements[0] as ASTExpressionStatement;
+    expect(bodyExp.expression).not.toBe(null);
+
+    testInfixExpression(bodyExp.expression as ASTExpression, "x", "+", "y");
+
+    const tests: { input: string; expectedParams: string[] }[] = [
+      { input: "fn() {}", expectedParams: [] },
+      { input: "fn(x) {}", expectedParams: ["x"] },
+      { input: "fn(x, y) {}", expectedParams: ["x", "y"] },
+    ];
+
+    tests.forEach((tt) => {
+      const l = new Lexer(tt.input);
+      const p = new Parser(l);
+      const program = p.parseProgram();
+      checkParserErrors(p);
+
+      const stmt = program.statements[0] as ASTExpressionStatement;
+      const fn = stmt.expression as ASTFunctionLiteral;
+
+      const parameters = fn.parameters as ASTIdentifier[];
+
+      expect(parameters.length).toBe(tt.expectedParams.length);
+      tt.expectedParams.forEach((t, i) => {
+        testLiteralExpression(parameters[i], t);
+      });
+    });
   });
 
   test("String", () => {

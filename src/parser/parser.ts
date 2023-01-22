@@ -3,6 +3,7 @@ import {
   ASTBooleanLiteral,
   ASTExpression,
   ASTExpressionStatement,
+  ASTFunctionLiteral,
   ASTIdentifier,
   ASTIfExpression,
   ASTInfixExpression,
@@ -42,6 +43,8 @@ import {
   LBRACE,
   RBRACE,
   ELSE,
+  FUNCTION,
+  COMMA,
 } from "../token/token";
 import { iota } from "../util/iota";
 
@@ -83,6 +86,7 @@ export class Parser {
     this.registerPrefix(FALSE, this.parseBooleanLiteral);
     this.registerPrefix(LPAREN, this.parseGroupedExpression);
     this.registerPrefix(IF, this.parseIfExpression);
+    this.registerPrefix(FUNCTION, this.parseFunctionLiteral);
 
     this.registerInfix(PLUS, this.parseInfixExpression);
     this.registerInfix(MINUS, this.parseInfixExpression);
@@ -356,4 +360,43 @@ export class Parser {
 
     return new ASTBlockStatement(token, stmts);
   }
+
+  parseFunctionLiteral = (): ASTFunctionLiteral | null => {
+    const token = this.curToken;
+
+    if (!this.expectPeek(LPAREN)) {
+      return null;
+    }
+
+    const parameters = this.parseFunctionParameters();
+
+    if (!this.expectPeek(LBRACE)) {
+      return null;
+    }
+
+    const body = this.parseBlockStatement();
+
+    return new ASTFunctionLiteral(token, parameters, body);
+  };
+
+  parseFunctionParameters = (): ASTIdentifier[] | null => {
+    const parameters: ASTIdentifier[] = [];
+    if (this.peekTokenIs(RPAREN)) {
+      this.nextToken();
+      return parameters;
+    }
+
+    // Identifier でない場合は？
+    this.nextToken();
+    parameters.push(new ASTIdentifier(this.curToken, this.curToken.literal));
+
+    while (this.peekTokenIs(COMMA)) {
+      this.nextToken();
+      this.nextToken();
+      parameters.push(new ASTIdentifier(this.curToken, this.curToken.literal));
+    }
+
+    if (!this.expectPeek(RPAREN)) return null;
+    return parameters;
+  };
 }

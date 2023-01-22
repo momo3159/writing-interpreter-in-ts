@@ -261,3 +261,28 @@ export class ASTBlockStatement implements ASTStatement {
     return this.statements.map((st) => st.String()).join();
   }
 }
+
+export class ASTFunctionLiteral implements ASTExpression {
+  token: Token;
+  parameters: ASTIdentifier[] | null;
+  body: ASTBlockStatement | null;
+
+  constructor(
+    token: Token,
+    parameters: ASTIdentifier[] | null,
+    body: ASTBlockStatement | null
+  ) {
+    this.token = token;
+    this.parameters = parameters;
+    this.body = body;
+  }
+
+  expressionNode(): void {}
+  tokenLiteral(): string {
+    return this.token.literal;
+  }
+  String(): string {
+    const parameters = this.parameters?.map((p) => p.String()).join(", ");
+    return `${this.tokenLiteral()}(${parameters}) ${this.body?.String()}`;
+  }
+}
