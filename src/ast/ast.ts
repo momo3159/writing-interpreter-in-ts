@@ -286,3 +286,29 @@ export class ASTFunctionLiteral implements ASTExpression {
     return `${this.tokenLiteral()}(${parameters}) ${this.body?.String()}`;
   }
 }
+
+export class ASTCallExpression implements ASTExpression {
+  token: Token;
+  func: ASTExpression;
+  args: (ASTExpression | null)[] | null;
+
+  constructor(
+    token: Token,
+    func: ASTExpression,
+    args: (ASTExpression | null)[] | null
+  ) {
+    this.token = token;
+    this.func = func;
+    this.args = args;
+  }
+
+  expressionNode(): void {}
+  tokenLiteral(): string {
+    return this.token.literal;
+  }
+  String(): string {
+    return `${this.func.String()}(${this.args
+      ?.map((arg) => arg?.String())
+      .join(", ")})`;
+  }
+}

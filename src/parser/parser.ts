@@ -1,6 +1,7 @@
 import {
   ASTBlockStatement,
   ASTBooleanLiteral,
+  ASTCallExpression,
   ASTExpression,
   ASTExpressionStatement,
   ASTFunctionLiteral,
@@ -61,6 +62,7 @@ const PRECEDENCES: ReadonlyMap<TokenKind, number> = new Map([
   [MINUS, SUM],
   [SLASH, PRODUCT],
   [ASTERISK, PRODUCT],
+  [LPAREN, CALL],
 ]);
 
 export class Parser {
@@ -96,6 +98,7 @@ export class Parser {
     this.registerInfix(NOT_EQ, this.parseInfixExpression);
     this.registerInfix(LT, this.parseInfixExpression);
     this.registerInfix(GT, this.parseInfixExpression);
+    this.registerInfix(LPAREN, this.parseCallExpression);
   }
 
   nextToken() {
@@ -399,4 +402,36 @@ export class Parser {
     if (!this.expectPeek(RPAREN)) return null;
     return parameters;
   };
+
+  parseCallExpression = (func: ASTExpression): ASTExpression | null => {
+    const token = this.curToken;
+    const args = this.parseCallArguments();
+    return new ASTCallExpression(token, func, args);
+  };
+
+  parseCallArguments(): (ASTExpression | null)[] | null {
+    const args: (ASTExpression | null)[] = [];
+    if (this.peekTokenIs(RPAREN)) {
+      this.nextToken();
+      return args;
+    }
+
+    this.nextToken();
+    // add(2*3, 1)を考える
+    // LOWEST でないと，　２がaddに吸い寄せられる場合がある
+    args.push(this.parseExpression(LOWEST));
+
+    while (this.peekTokenIs(COMMA)) {
+      this.nextToken();
+      this.nextToken();
+      // LOWEST でないと，curTokenだけで解析が終わってしまう場合がる
+      args.push(this.parseExpression(LOWEST));
+    }
+
+    if (!this.expectPeek(RPAREN)) {
+      return null;
+    }
+
+    return args;
+  }
 }

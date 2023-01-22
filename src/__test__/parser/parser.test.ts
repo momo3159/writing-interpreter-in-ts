@@ -13,6 +13,7 @@ import {
   ASTIfExpression,
   ASTBlockStatement,
   ASTFunctionLiteral,
+  ASTCallExpression,
 } from "../../ast/ast";
 import { Lexer } from "../../lexer/lexer";
 import { Parser } from "../../parser/parser";
@@ -339,6 +340,29 @@ describe("parser", () => {
         testLiteralExpression(parameters[i], t);
       });
     });
+  });
+
+  test("関数呼び出し式の解析", () => {
+    const input = "add(1, 2 * 3, 4 + 5)";
+    const l = new Lexer(input);
+    const p = new Parser(l);
+    const program = p.parseProgram();
+    checkParserErrors(p);
+
+    expect(program.statements.length).toBe(1);
+    expect(program.statements[0] instanceof ASTExpressionStatement).toBe(true);
+    const stmt = program.statements[0] as ASTExpressionStatement;
+
+    expect(stmt.expression instanceof ASTCallExpression).toBe(true);
+    const exp = stmt.expression as ASTCallExpression;
+
+    testIdentifier(exp.func, "add");
+    if (!Array.isArray(exp.args)) throw new Error("invalid args");
+    expect(exp.args.length).toBe(3);
+
+    testLiteralExpression(exp.args[0], 1);
+    testInfixExpression(exp.args[1] as ASTExpression, 2, "*", 3);
+    testInfixExpression(exp.args[2] as ASTExpression, 4, "+", 5);
   });
 
   test("String", () => {
