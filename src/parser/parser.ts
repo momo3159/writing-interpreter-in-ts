@@ -146,6 +146,9 @@ export class Parser {
     }
 
     // TODO: 式の解析
+    this.nextToken();
+    stmt.value = this.parseExpression(LOWEST);
+
     while (!this.curTokenIs(SEMICOLON)) {
       this.nextToken();
     }
@@ -157,7 +160,8 @@ export class Parser {
     const stmt = new ASTReturnStatement(this.curToken);
     this.nextToken();
 
-    // TOOD: 式の解析
+    stmt.returnValue = this.parseExpression(LOWEST);
+    
     while (!this.curTokenIs(SEMICOLON)) {
       this.nextToken();
     }

@@ -30,16 +30,27 @@ describe("parser", () => {
     const program = p.parseProgram();
     checkParserErrors(p);
 
-    const tests: { expectedIdentifier: string }[] = [
-      { expectedIdentifier: "x" },
-      { expectedIdentifier: "y" },
-      { expectedIdentifier: "foobar" },
+    const tests: {
+      input: string;
+      expectedIdentifier: string;
+      expectedValue: any;
+    }[] = [
+      { input: "let x = 5;", expectedIdentifier: "x", expectedValue: 5 },
+      { input: "let y = 10;", expectedIdentifier: "y", expectedValue: 10 },
+      {
+        input: "let foobar = 838383;",
+        expectedIdentifier: "foobar",
+        expectedValue: 838383,
+      },
     ];
 
     expect(program.statements.length).toBe(3);
     tests.forEach((tt, i) => {
-      const stmt = program.statements[i];
+      const stmt = program.statements[i] as ASTLetStatement;
       testLetStatement(stmt, tests[i].expectedIdentifier);
+
+      const val = stmt.value;
+      testLiteralExpression(val, tt.expectedValue);
     });
   });
 
