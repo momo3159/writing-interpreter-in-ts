@@ -32,14 +32,10 @@ export class Program implements ASTNode {
 
 export class ASTLetStatement implements ASTStatement {
   token: Token;
-  name: ASTIdentifier | null = null; // 木の左側の子
-  value: ASTExpression | null = null; // 木の右側の子
+  name: ASTIdentifier; // 木の左側の子
+  value: ASTExpression; // 木の右側の子
 
-  constructor(
-    token: Token,
-    name: ASTIdentifier | null = null,
-    value: ASTExpression | null = null
-  ) {
+  constructor(token: Token, name: ASTIdentifier, value: ASTExpression) {
     this.token = token;
     this.name = name;
     this.value = value;
@@ -58,9 +54,9 @@ export class ASTLetStatement implements ASTStatement {
 
 export class ASTReturnStatement implements ASTStatement {
   token: Token;
-  returnValue: ASTExpression | null = null;
+  returnValue: ASTExpression;
 
-  constructor(token: Token, returnValue: ASTExpression | null = null) {
+  constructor(token: Token, returnValue: ASTExpression) {
     this.token = token;
     this.returnValue = returnValue;
   }
@@ -77,9 +73,9 @@ export class ASTReturnStatement implements ASTStatement {
 
 export class ASTExpressionStatement implements ASTStatement {
   token: Token;
-  expression: ASTExpression | null;
+  expression: ASTExpression;
 
-  constructor(token: Token, expression: ASTExpression | null = null) {
+  constructor(token: Token, expression: ASTExpression) {
     this.token = token;
     this.expression = expression;
   }
@@ -90,11 +86,7 @@ export class ASTExpressionStatement implements ASTStatement {
   statementNode(): void {}
 
   String(): string {
-    if (this.expression !== null) {
-      return this.expression.String();
-    } else {
-      return "";
-    }
+    return this.expression.String();
   }
 }
 
@@ -144,13 +136,9 @@ export class ASTIntegerLiteral implements ASTExpression {
 export class ASTPrefixExpression implements ASTExpression {
   token: Token;
   operator: string;
-  right: ASTExpression | null;
+  right: ASTExpression;
 
-  constructor(
-    token: Token,
-    operator: string,
-    right: ASTExpression | null = null
-  ) {
+  constructor(token: Token, operator: string, right: ASTExpression) {
     this.token = token;
     this.operator = operator;
     this.right = right;
@@ -163,7 +151,7 @@ export class ASTPrefixExpression implements ASTExpression {
   }
 
   String(): string {
-    return `(${this.operator}${this.right?.String()})`;
+    return `(${this.operator}${this.right.String()})`;
   }
 }
 
@@ -171,13 +159,13 @@ export class ASTInfixExpression implements ASTExpression {
   token: Token;
   left: ASTExpression;
   operator: string;
-  right: ASTExpression | null;
+  right: ASTExpression;
 
   constructor(
     token: Token,
     operator: string,
     left: ASTExpression,
-    right: ASTExpression | null = null
+    right: ASTExpression
   ) {
     this.token = token;
     this.operator = operator;
@@ -192,7 +180,7 @@ export class ASTInfixExpression implements ASTExpression {
   }
 
   String(): string {
-    return `(${this.left?.String()} ${this.operator} ${this.right?.String()})`;
+    return `(${this.left.String()} ${this.operator} ${this.right.String()})`;
   }
 }
 
@@ -216,14 +204,14 @@ export class ASTBooleanLiteral implements ASTExpression {
 
 export class ASTIfExpression implements ASTExpression {
   token: Token;
-  condition: ASTExpression | null;
-  consequence: ASTBlockStatement | null;
+  condition: ASTExpression;
+  consequence: ASTBlockStatement;
   alternative: ASTBlockStatement | null;
 
   constructor(
     token: Token,
-    condition: ASTExpression | null = null,
-    consequence: ASTBlockStatement | null = null,
+    condition: ASTExpression,
+    consequence: ASTBlockStatement,
     alternative: ASTBlockStatement | null = null
   ) {
     this.token = token;
@@ -237,7 +225,7 @@ export class ASTIfExpression implements ASTExpression {
     return this.token.literal;
   }
   String(): string {
-    return `if ${this.condition?.String()} ${this.consequence?.String()} ${
+    return `if ${this.condition.String()} ${this.consequence.String()} ${
       this.alternative && "else" + this.alternative.String()
     }`;
   }
@@ -264,13 +252,13 @@ export class ASTBlockStatement implements ASTStatement {
 
 export class ASTFunctionLiteral implements ASTExpression {
   token: Token;
-  parameters: ASTIdentifier[] | null;
-  body: ASTBlockStatement | null;
+  parameters: ASTIdentifier[];
+  body: ASTBlockStatement;
 
   constructor(
     token: Token,
-    parameters: ASTIdentifier[] | null,
-    body: ASTBlockStatement | null
+    parameters: ASTIdentifier[],
+    body: ASTBlockStatement
   ) {
     this.token = token;
     this.parameters = parameters;
@@ -283,20 +271,16 @@ export class ASTFunctionLiteral implements ASTExpression {
   }
   String(): string {
     const parameters = this.parameters?.map((p) => p.String()).join(", ");
-    return `${this.tokenLiteral()}(${parameters}) ${this.body?.String()}`;
+    return `${this.tokenLiteral()}(${parameters}) ${this.body.String()}`;
   }
 }
 
 export class ASTCallExpression implements ASTExpression {
   token: Token;
   func: ASTExpression;
-  args: (ASTExpression | null)[] | null;
+  args: ASTExpression[];
 
-  constructor(
-    token: Token,
-    func: ASTExpression,
-    args: (ASTExpression | null)[] | null
-  ) {
+  constructor(token: Token, func: ASTExpression, args: ASTExpression[]) {
     this.token = token;
     this.func = func;
     this.args = args;
@@ -308,7 +292,7 @@ export class ASTCallExpression implements ASTExpression {
   }
   String(): string {
     return `${this.func.String()}(${this.args
-      ?.map((arg) => arg?.String())
+      .map((arg) => arg.String())
       .join(", ")})`;
   }
 }

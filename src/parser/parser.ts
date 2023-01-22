@@ -133,44 +133,45 @@ export class Parser {
   }
 
   parseLetStatement(): ASTLetStatement | null {
-    const stmt = new ASTLetStatement(this.curToken);
+    const token = this.curToken;
     if (!this.expectPeek(IDENT)) {
       return null;
     }
 
-    // IDENTIFIERの解析
-    stmt.name = new ASTIdentifier(this.curToken, this.curToken.literal);
-
+    // Identifier の解析
+    const name = new ASTIdentifier(this.curToken, this.curToken.literal);
     if (!this.expectPeek(ASSIGN)) {
       return null;
     }
 
-    // TODO: 式の解析
     this.nextToken();
-    stmt.value = this.parseExpression(LOWEST);
+
+    // 右辺の解析
+    const value = this.parseExpression(LOWEST);
     if (this.peekTokenIs(SEMICOLON)) this.nextToken();
-    return stmt;
+
+    return value ? new ASTLetStatement(token, name, value) : null;
   }
 
   parseReturnStatement(): ASTReturnStatement | null {
-    const stmt = new ASTReturnStatement(this.curToken);
+    const token = this.curToken;
     this.nextToken();
 
-    stmt.returnValue = this.parseExpression(LOWEST);
+    const returnValue = this.parseExpression(LOWEST);
     if (this.peekTokenIs(SEMICOLON)) this.nextToken();
 
-    return stmt;
+    return returnValue ? new ASTReturnStatement(token, returnValue) : null;
   }
 
   parseExpressionStatement(): ASTExpressionStatement | null {
-    const stmt = new ASTExpressionStatement(this.curToken);
-    stmt.expression = this.parseExpression(LOWEST);
+    const token = this.curToken;
+    const expression = this.parseExpression(LOWEST);
 
     if (this.peekTokenIs(SEMICOLON)) {
       this.nextToken();
     }
 
-    return stmt;
+    return expression ? new ASTExpressionStatement(token, expression) : null;
   }
 
   parseExpression(precedence: number): ASTExpression | null {
@@ -212,11 +213,13 @@ export class Parser {
   };
 
   parsePrefixExpression = (): ASTExpression | null => {
-    const exp = new ASTPrefixExpression(this.curToken, this.curToken.literal);
+    const token = this.curToken;
+    const operator = this.curToken.literal;
+
     this.nextToken();
 
-    exp.right = this.parseExpression(PREFIX);
-    return exp;
+    const right = this.parseExpression(PREFIX);
+    return right ? new ASTPrefixExpression(token, operator, right) : null;
   };
 
   curTokenIs(tk: TokenKind) {
@@ -274,17 +277,17 @@ export class Parser {
   }
 
   parseInfixExpression = (left: ASTExpression): ASTExpression | null => {
-    const exp = new ASTInfixExpression(
-      this.curToken,
-      this.curToken.literal,
-      left
-    );
+    const token = this.curToken;
+    const operator = this.curToken.literal;
 
     const precedence = this.curPrecedence();
     this.nextToken();
-    exp.right = this.parseExpression(precedence);
 
-    return exp;
+    const right = this.parseExpression(precedence);
+
+    return left !== null && right !== null
+      ? new ASTInfixExpression(token, operator, left, right)
+      : null;
   };
 
   parseBooleanLiteral = (): ASTExpression => {
@@ -313,15 +316,17 @@ export class Parser {
     this.nextToken();
     const condition = this.parseExpression(LOWEST);
 
+    if (!condition) return null;
     if (!this.expectPeek(RPAREN)) {
       return null;
     }
-
     if (!this.expectPeek(LBRACE)) {
       return null;
     }
 
     const consequence = this.parseBlockStatement();
+    if (!consequence) return null;
+
     if (this.peekTokenIs(ELSE)) {
       this.nextToken();
       if (!this.expectPeek(LBRACE)) {
@@ -331,17 +336,6 @@ export class Parser {
       const alternative = this.parseBlockStatement();
       return new ASTIfExpression(ifToken, condition, consequence, alternative);
     }
-
-    // if (!this.expectPeek(ELSE)) {
-    //   return new ASTIfExpression(ifToken, condition, consequence, null);
-    // }
-
-    // if (!this.expectPeek(LBRACE)) {
-    //   return null;
-    // }
-
-    // const alternative = this.parseBlockStatement();
-    // if (!this.expectPeek(RBRACE)) return null;
 
     return new ASTIfExpression(ifToken, condition, consequence, null);
   };
@@ -369,12 +363,13 @@ export class Parser {
     }
 
     const parameters = this.parseFunctionParameters();
-
+    if (parameters === null) return null;
     if (!this.expectPeek(LBRACE)) {
       return null;
     }
 
     const body = this.parseBlockStatement();
+    if (!body) return null;
 
     return new ASTFunctionLiteral(token, parameters, body);
   };
@@ -386,7 +381,6 @@ export class Parser {
       return parameters;
     }
 
-    // Identifier でない場合は？
     this.nextToken();
     parameters.push(new ASTIdentifier(this.curToken, this.curToken.literal));
 
@@ -403,11 +397,11 @@ export class Parser {
   parseCallExpression = (func: ASTExpression): ASTExpression | null => {
     const token = this.curToken;
     const args = this.parseCallArguments();
-    return new ASTCallExpression(token, func, args);
+    return args ? new ASTCallExpression(token, func, args) : null;
   };
 
-  parseCallArguments(): (ASTExpression | null)[] | null {
-    const args: (ASTExpression | null)[] = [];
+  parseCallArguments(): ASTExpression[] | null {
+    const args: ASTExpression[] = [];
     if (this.peekTokenIs(RPAREN)) {
       this.nextToken();
       return args;
@@ -416,13 +410,18 @@ export class Parser {
     this.nextToken();
     // add(2*3, 1)を考える
     // LOWEST でないと，　２がaddに吸い寄せられる場合がある
-    args.push(this.parseExpression(LOWEST));
+    const firstArg = this.parseExpression(LOWEST);
+    if (!firstArg) return null;
+    args.push(firstArg);
 
     while (this.peekTokenIs(COMMA)) {
       this.nextToken();
       this.nextToken();
+
       // LOWEST でないと，curTokenだけで解析が終わってしまう場合がる
-      args.push(this.parseExpression(LOWEST));
+      const arg = this.parseExpression(LOWEST);
+      if (!arg) return null;
+      args.push(arg);
     }
 
     if (!this.expectPeek(RPAREN)) {
