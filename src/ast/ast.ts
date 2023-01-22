@@ -71,6 +71,25 @@ export class ASTReturnStatement implements ASTStatement {
   }
 }
 
+export class ASTBlockStatement implements ASTStatement {
+  token: Token;
+  statements: ASTStatement[];
+
+  constructor(token: Token, statements: ASTStatement[]) {
+    this.token = token;
+    this.statements = statements;
+  }
+
+  statementNode(): void {}
+  tokenLiteral(): string {
+    return this.token.literal;
+  }
+
+  String(): string {
+    return this.statements.map((st) => st.String()).join();
+  }
+}
+
 export class ASTExpressionStatement implements ASTStatement {
   token: Token;
   expression: ASTExpression;
@@ -87,49 +106,6 @@ export class ASTExpressionStatement implements ASTStatement {
 
   String(): string {
     return this.expression.String();
-  }
-}
-
-/**
- * 簡単のため，Identifierノードを式として扱う
- * IDENTが左辺にある場合は値を生成せず，右辺にある場合は値を生成する
- * これらをとりあえず同一視して扱う
- */
-export class ASTIdentifier implements ASTExpression {
-  token: Token;
-  value: string;
-
-  constructor(token: Token, value: string) {
-    this.token = token;
-    this.value = value;
-  }
-
-  tokenLiteral(): string {
-    return this.token.literal;
-  }
-  expressionNode(): void {}
-
-  String(): string {
-    return this.value;
-  }
-}
-
-export class ASTIntegerLiteral implements ASTExpression {
-  token: Token;
-  value: number;
-
-  constructor(token: Token, value: number) {
-    this.token = token;
-    this.value = value;
-  }
-
-  expressionNode(): void {}
-
-  tokenLiteral(): string {
-    return this.token.literal;
-  }
-  String(): string {
-    return this.token.literal;
   }
 }
 
@@ -183,25 +159,6 @@ export class ASTInfixExpression implements ASTExpression {
     return `(${this.left.String()} ${this.operator} ${this.right.String()})`;
   }
 }
-
-export class ASTBooleanLiteral implements ASTExpression {
-  token: Token;
-  value: boolean;
-
-  constructor(token: Token, value: boolean) {
-    this.token = token;
-    this.value = value;
-  }
-
-  expressionNode(): void {}
-  tokenLiteral(): string {
-    return this.token.literal;
-  }
-  String(): string {
-    return this.token.literal;
-  }
-}
-
 export class ASTIfExpression implements ASTExpression {
   token: Token;
   condition: ASTExpression;
@@ -230,26 +187,86 @@ export class ASTIfExpression implements ASTExpression {
     }`;
   }
 }
-
-export class ASTBlockStatement implements ASTStatement {
+export class ASTCallExpression implements ASTExpression {
   token: Token;
-  statements: ASTStatement[];
+  func: ASTExpression;
+  args: ASTExpression[];
 
-  constructor(token: Token, statements: ASTStatement[]) {
+  constructor(token: Token, func: ASTExpression, args: ASTExpression[]) {
     this.token = token;
-    this.statements = statements;
+    this.func = func;
+    this.args = args;
   }
 
-  statementNode(): void {}
+  expressionNode(): void {}
   tokenLiteral(): string {
     return this.token.literal;
   }
-
   String(): string {
-    return this.statements.map((st) => st.String()).join();
+    return `${this.func.String()}(${this.args
+      .map((arg) => arg.String())
+      .join(", ")})`;
   }
 }
 
+/**
+ * 簡単のため，Identifierノードを式として扱う
+ * IDENTが左辺にある場合は値を生成せず，右辺にある場合は値を生成する
+ * これらをとりあえず同一視して扱う
+ */
+export class ASTIdentifier implements ASTExpression {
+  token: Token;
+  value: string;
+
+  constructor(token: Token, value: string) {
+    this.token = token;
+    this.value = value;
+  }
+
+  tokenLiteral(): string {
+    return this.token.literal;
+  }
+  expressionNode(): void {}
+
+  String(): string {
+    return this.value;
+  }
+}
+export class ASTIntegerLiteral implements ASTExpression {
+  token: Token;
+  value: number;
+
+  constructor(token: Token, value: number) {
+    this.token = token;
+    this.value = value;
+  }
+
+  expressionNode(): void {}
+
+  tokenLiteral(): string {
+    return this.token.literal;
+  }
+  String(): string {
+    return this.token.literal;
+  }
+}
+export class ASTBooleanLiteral implements ASTExpression {
+  token: Token;
+  value: boolean;
+
+  constructor(token: Token, value: boolean) {
+    this.token = token;
+    this.value = value;
+  }
+
+  expressionNode(): void {}
+  tokenLiteral(): string {
+    return this.token.literal;
+  }
+  String(): string {
+    return this.token.literal;
+  }
+}
 export class ASTFunctionLiteral implements ASTExpression {
   token: Token;
   parameters: ASTIdentifier[];
@@ -275,24 +292,3 @@ export class ASTFunctionLiteral implements ASTExpression {
   }
 }
 
-export class ASTCallExpression implements ASTExpression {
-  token: Token;
-  func: ASTExpression;
-  args: ASTExpression[];
-
-  constructor(token: Token, func: ASTExpression, args: ASTExpression[]) {
-    this.token = token;
-    this.func = func;
-    this.args = args;
-  }
-
-  expressionNode(): void {}
-  tokenLiteral(): string {
-    return this.token.literal;
-  }
-  String(): string {
-    return `${this.func.String()}(${this.args
-      .map((arg) => arg.String())
-      .join(", ")})`;
-  }
-}

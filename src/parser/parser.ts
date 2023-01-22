@@ -105,6 +105,33 @@ export class Parser {
     this.curToken = this.peekToken;
     this.peekToken = this.l.nextToken();
   }
+  curTokenIs(tk: TokenKind) {
+    return this.curToken.kind === tk;
+  }
+  peekTokenIs(tk: TokenKind) {
+    return this.peekToken.kind === tk;
+  }
+  expectPeek(tk: TokenKind): boolean {
+    if (this.peekTokenIs(tk)) {
+      this.nextToken();
+      return true;
+    } else {
+      this.peekError(tk);
+      return false;
+    }
+  }
+  curPrecedence(): number {
+    const p = PRECEDENCES.get(this.curToken.kind);
+
+    if (p !== undefined) return p;
+    else return LOWEST;
+  }
+  peekPrecedence(): number {
+    const p = PRECEDENCES.get(this.peekToken.kind);
+
+    if (p !== undefined) return p;
+    else return LOWEST;
+  }
 
   parseProgram(): Program {
     const program: Program = new Program();
@@ -163,6 +190,21 @@ export class Parser {
     return returnValue ? new ASTReturnStatement(token, returnValue) : null;
   }
 
+  parseBlockStatement(): ASTBlockStatement | null {
+    const token = this.curToken;
+    const stmts: ASTStatement[] = [];
+
+    this.nextToken();
+
+    while (!this.curTokenIs(RBRACE) && !this.curTokenIs(EOF)) {
+      const stmt = this.parseStatement();
+      if (stmt !== null) stmts.push(stmt);
+      this.nextToken();
+    }
+
+    return new ASTBlockStatement(token, stmts);
+  }
+
   parseExpressionStatement(): ASTExpressionStatement | null {
     const token = this.curToken;
     const expression = this.parseExpression(LOWEST);
@@ -198,20 +240,6 @@ export class Parser {
     return leftExp;
   }
 
-  parseIdentifier = (): ASTExpression => {
-    return new ASTIdentifier(this.curToken, this.curToken.literal);
-  };
-
-  parseIntegerLiteral = (): ASTIntegerLiteral | null => {
-    const literal = this.curToken.literal;
-    const value = Number(literal);
-    if (Number.isNaN(value)) {
-      this.errors.push(`could not parse ${this.curToken.literal} as integer`);
-      return null;
-    }
-    return new ASTIntegerLiteral(this.curToken, value);
-  };
-
   parsePrefixExpression = (): ASTExpression | null => {
     const token = this.curToken;
     const operator = this.curToken.literal;
@@ -221,60 +249,6 @@ export class Parser {
     const right = this.parseExpression(PREFIX);
     return right ? new ASTPrefixExpression(token, operator, right) : null;
   };
-
-  curTokenIs(tk: TokenKind) {
-    return this.curToken.kind === tk;
-  }
-
-  peekTokenIs(tk: TokenKind) {
-    return this.peekToken.kind === tk;
-  }
-
-  expectPeek(tk: TokenKind): boolean {
-    if (this.peekTokenIs(tk)) {
-      this.nextToken();
-      return true;
-    } else {
-      this.peekError(tk);
-      return false;
-    }
-  }
-
-  getErrors(): string[] {
-    return this.errors;
-  }
-
-  peekError(t: TokenKind) {
-    const msg = `expected next token to be ${t}, bug got ${this.peekToken.kind}`;
-    this.errors.push(msg);
-  }
-
-  registerPrefix(tt: TokenKind, fn: PrefixParseFn) {
-    this.prefixParseFns.set(tt, fn);
-  }
-
-  registerInfix(tt: TokenKind, fn: InfixParseFn) {
-    this.infixParseFns.set(tt, fn);
-  }
-
-  noPrefixParseFnError(tt: TokenKind) {
-    const msg = `no prefix parse function for ${tt} found`;
-    this.errors.push(msg);
-  }
-
-  curPrecedence(): number {
-    const p = PRECEDENCES.get(this.curToken.kind);
-
-    if (p !== undefined) return p;
-    else return LOWEST;
-  }
-
-  peekPrecedence(): number {
-    const p = PRECEDENCES.get(this.peekToken.kind);
-
-    if (p !== undefined) return p;
-    else return LOWEST;
-  }
 
   parseInfixExpression = (left: ASTExpression): ASTExpression | null => {
     const token = this.curToken;
@@ -288,11 +262,6 @@ export class Parser {
     return left !== null && right !== null
       ? new ASTInfixExpression(token, operator, left, right)
       : null;
-  };
-
-  parseBooleanLiteral = (): ASTExpression => {
-    const exp = new ASTBooleanLiteral(this.curToken, this.curTokenIs(TRUE));
-    return exp;
   };
 
   parseGroupedExpression = (): ASTExpression | null => {
@@ -339,21 +308,31 @@ export class Parser {
 
     return new ASTIfExpression(ifToken, condition, consequence, null);
   };
-
-  parseBlockStatement(): ASTBlockStatement | null {
+  
+  parseCallExpression = (func: ASTExpression): ASTExpression | null => {
     const token = this.curToken;
-    const stmts: ASTStatement[] = [];
+    const args = this.parseCallArguments();
+    return args ? new ASTCallExpression(token, func, args) : null;
+  };
 
-    this.nextToken();
+  parseIdentifier = (): ASTExpression => {
+    return new ASTIdentifier(this.curToken, this.curToken.literal);
+  };
 
-    while (!this.curTokenIs(RBRACE) && !this.curTokenIs(EOF)) {
-      const stmt = this.parseStatement();
-      if (stmt !== null) stmts.push(stmt);
-      this.nextToken();
+  parseIntegerLiteral = (): ASTIntegerLiteral | null => {
+    const literal = this.curToken.literal;
+    const value = Number(literal);
+    if (Number.isNaN(value)) {
+      this.errors.push(`could not parse ${this.curToken.literal} as integer`);
+      return null;
     }
+    return new ASTIntegerLiteral(this.curToken, value);
+  };
 
-    return new ASTBlockStatement(token, stmts);
-  }
+  parseBooleanLiteral = (): ASTExpression => {
+    const exp = new ASTBooleanLiteral(this.curToken, this.curTokenIs(TRUE));
+    return exp;
+  };
 
   parseFunctionLiteral = (): ASTFunctionLiteral | null => {
     const token = this.curToken;
@@ -394,12 +373,6 @@ export class Parser {
     return parameters;
   };
 
-  parseCallExpression = (func: ASTExpression): ASTExpression | null => {
-    const token = this.curToken;
-    const args = this.parseCallArguments();
-    return args ? new ASTCallExpression(token, func, args) : null;
-  };
-
   parseCallArguments(): ASTExpression[] | null {
     const args: ASTExpression[] = [];
     if (this.peekTokenIs(RPAREN)) {
@@ -429,5 +402,27 @@ export class Parser {
     }
 
     return args;
+  }
+
+  registerPrefix(tt: TokenKind, fn: PrefixParseFn) {
+    this.prefixParseFns.set(tt, fn);
+  }
+
+  registerInfix(tt: TokenKind, fn: InfixParseFn) {
+    this.infixParseFns.set(tt, fn);
+  }
+
+  noPrefixParseFnError(tt: TokenKind) {
+    const msg = `no prefix parse function for ${tt} found`;
+    this.errors.push(msg);
+  }
+
+  getErrors(): string[] {
+    return this.errors;
+  }
+
+  peekError(t: TokenKind) {
+    const msg = `expected next token to be ${t}, bug got ${this.peekToken.kind}`;
+    this.errors.push(msg);
   }
 }
