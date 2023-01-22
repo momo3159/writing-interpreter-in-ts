@@ -7,6 +7,8 @@ import {
   ASTBooleanLiteral,
 } from "../ast/ast";
 import { Boolean_, Integer, Object_ } from "../object/object";
+const TRUE = new Boolean_(true);
+const FALSE = new Boolean_(false);
 
 export const evaluate = (node: ASTNode | null): Object_ | null => {
   if (node instanceof Program) {
@@ -19,7 +21,8 @@ export const evaluate = (node: ASTNode | null): Object_ | null => {
     return new Integer(node.value);
   }
   if (node instanceof ASTBooleanLiteral) {
-    return new Boolean_(node.value);
+    if (node.value) return TRUE;
+    else return FALSE;
   }
 
   return null;
