@@ -1,7 +1,7 @@
-import { Lexer } from "../lexer/lexer";
-import { Boolean_, Integer, Object_ } from "../object/object";
-import { Parser } from "../parser/parser";
-import { evaluate } from "./evaluator";
+import { Lexer } from "../../lexer/lexer";
+import { Boolean_, Integer, Object_ } from "../../object/object";
+import { Parser } from "../../parser/parser";
+import { evaluate } from "../../evaluator/evaluator";
 
 test("整数の評価", () => {
   const tests = [
