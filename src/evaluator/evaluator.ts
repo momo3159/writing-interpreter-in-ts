@@ -6,9 +6,10 @@ import {
   ASTStatement,
   ASTBooleanLiteral,
 } from "../ast/ast";
-import { Boolean_, Integer, Object_ } from "../object/object";
+import { Boolean_, Integer, Null, Object_ } from "../object/object";
 const TRUE = new Boolean_(true);
 const FALSE = new Boolean_(false);
+const NULL = new Null();
 
 export const evaluate = (node: ASTNode | null): Object_ | null => {
   if (node instanceof Program) {
