@@ -33,6 +33,23 @@ test("真偽値の評価", () => {
   });
 });
 
+test("!演算子の評価", () => {
+  const tests = [
+    { input: "!true", expected: false },
+    { input: "!false", expected: true },
+    { input: "!5", expected: false },
+    { input: "!!true", expected: true },
+    { input: "!!false", expected: false },
+    { input: "!!5", expected: true },
+  ];
+
+  tests.forEach(({ input, expected }) => {
+    const evaluated = testEval(input);
+    if (evaluated === null) throw new Error("null is invalid");
+    testBooleanObject(evaluated, expected);
+  });
+});
+
 const testEval = (input: string): Object_ | null => {
   const l = new Lexer(input);
   const p = new Parser(l);
