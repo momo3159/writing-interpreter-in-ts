@@ -27,7 +27,7 @@ const NULL = new Null();
 
 export const evaluate = (node: ASTNode | null): Object_ | null => {
   if (node instanceof Program) {
-    return evaluateStatements(node.statements);
+    return evaluateProgram(node);
   }
   if (node instanceof ASTExpressionStatement) {
     return evaluate(node.expression);
@@ -53,7 +53,7 @@ export const evaluate = (node: ASTNode | null): Object_ | null => {
     return evaluateIfExpression(condition, consequence, alternative);
   }
   if (node instanceof ASTBlockStatement) {
-    return evaluateStatements(node.statements);
+    return evaluateBlockStatement(node);
   }
   if (node instanceof ASTInfixExpression) {
     const left = evaluate(node.left);
@@ -71,13 +71,26 @@ export const evaluate = (node: ASTNode | null): Object_ | null => {
   return null;
 };
 
-const evaluateStatements = (statements: ASTStatement[]): Object_ | null => {
+const evaluateProgram = (program: Program): Object_ | null => {
   let result: Object_ | null = null;
 
-  for (const stmt of statements) {
+  for (const stmt of program.statements) {
     result = evaluate(stmt);
     if (result instanceof ReturnValue) {
       return result.value;
+    }
+  }
+
+  return result;
+};
+
+const evaluateBlockStatement = (block: ASTBlockStatement): Object_ | null => {
+  let result: Object_ | null = null;
+
+  for (const stmt of block.statements) {
+    result = evaluate(stmt);
+    if (result instanceof ReturnValue) {
+      return result;
     }
   }
 
