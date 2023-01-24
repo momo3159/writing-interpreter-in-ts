@@ -11,6 +11,8 @@ import {
   ASTBlockStatement,
   ASTExpression,
   ASTReturnStatement,
+  ASTLetStatement,
+  ASTIdentifier,
 } from "../ast/ast";
 import { Environment } from "../object/environment";
 import {
@@ -75,6 +77,17 @@ export const evaluate = (
     if (value === null) return null;
     if (isError(value)) return value;
     return new ReturnValue(value);
+  }
+  if (node instanceof ASTLetStatement) {
+    const value = evaluate(node.value, env);
+    if (value === null) return null;
+    if (isError(value)) return value;
+
+    const name = node.name;
+    env.set(name.value, value);
+  }
+  if (node instanceof ASTIdentifier) {
+    return evaluateIdentifier(node, env);
   }
 
   return null;
@@ -243,6 +256,14 @@ const evaluateIfExpression = (
   } else if (alternative !== null) {
     return evaluate(alternative, env);
   } else return NULL;
+};
+
+const evaluateIdentifier = (node: ASTIdentifier, env: Environment): Object_ => {
+  const { value, exist } = env.get(node.value);
+  if (!exist) {
+    return new ErrorObj(`identifier not found: ${node.value}`);
+  }
+  return value as Object_;
 };
 
 const isTruthy = (obj: Object_ | null): boolean => {

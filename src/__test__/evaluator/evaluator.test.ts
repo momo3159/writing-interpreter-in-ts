@@ -156,6 +156,7 @@ test("エラーハンドリング", () => {
       input: "if (10 > 1) { if (10 > 1) { return true + false; } return 1; }",
       expectedMessage: "unknown operator: BOOLEAN + BOOLEAN",
     },
+    { input: "foobar", expectedMessage: "identifier not found: foobar" },
   ];
 
   tests.forEach(({ input, expectedMessage }) => {
@@ -164,6 +165,22 @@ test("エラーハンドリング", () => {
     if (evaluated === null) throw new Error("no error object returned.");
     expect(evaluated instanceof ErrorObj).toBe(true);
     expect((evaluated as ErrorObj).message).toBe(expectedMessage);
+  });
+});
+
+test("let 文の評価", () => {
+  const tests = [
+    { input: "let a = 5; a;", expected: 5 },
+    { input: "let a = 5 * 5; a;", expected: 25 },
+    { input: "let a = 5; let b = a; b;", expected: 5 },
+    { input: "let a = 5; let b = a; let c = a + b + 5; c;", expected: 15 },
+  ];
+
+  tests.forEach(({ input, expected }) => {
+    const evaluated = testEval(input);
+    if (evaluated === null) throw new Error("null is invalid");
+    expect(evaluated instanceof Integer).toBe(true);
+    testIntegerObject(evaluated, expected);
   });
 });
 
