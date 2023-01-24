@@ -12,6 +12,7 @@ import {
   ASTExpression,
   ASTReturnStatement,
 } from "../ast/ast";
+import { Environment } from "../object/environment";
 import {
   Boolean_,
   BOOLEAN_OBJ,
@@ -26,12 +27,15 @@ const TRUE = new Boolean_(true);
 const FALSE = new Boolean_(false);
 const NULL = new Null();
 
-export const evaluate = (node: ASTNode | null): Object_ | null => {
+export const evaluate = (
+  node: ASTNode | null,
+  env: Environment
+): Object_ | null => {
   if (node instanceof Program) {
-    return evaluateProgram(node);
+    return evaluateProgram(node, env);
   }
   if (node instanceof ASTExpressionStatement) {
-    return evaluate(node.expression);
+    return evaluate(node.expression, env);
   }
   if (node instanceof ASTIntegerLiteral) {
     return new Integer(node.value);
@@ -41,7 +45,7 @@ export const evaluate = (node: ASTNode | null): Object_ | null => {
     else return FALSE;
   }
   if (node instanceof ASTPrefixExpression) {
-    const right = evaluate(node.right);
+    const right = evaluate(node.right, env);
     if (right === null) return null;
     if (isError(right)) return right;
 
@@ -52,14 +56,14 @@ export const evaluate = (node: ASTNode | null): Object_ | null => {
     const consequence = node.consequence;
     const alternative = node.alternative;
 
-    return evaluateIfExpression(condition, consequence, alternative);
+    return evaluateIfExpression(condition, consequence, alternative, env);
   }
   if (node instanceof ASTBlockStatement) {
-    return evaluateBlockStatement(node);
+    return evaluateBlockStatement(node, env);
   }
   if (node instanceof ASTInfixExpression) {
-    const left = evaluate(node.left);
-    const right = evaluate(node.right);
+    const left = evaluate(node.left, env);
+    const right = evaluate(node.right, env);
     if (left === null || right === null) return null;
     if (isError(left)) return left;
     if (isError(right)) return right;
@@ -67,7 +71,7 @@ export const evaluate = (node: ASTNode | null): Object_ | null => {
     return evaluateInfixExpression(node.operator, left, right);
   }
   if (node instanceof ASTReturnStatement) {
-    const value = evaluate(node.returnValue);
+    const value = evaluate(node.returnValue, env);
     if (value === null) return null;
     if (isError(value)) return value;
     return new ReturnValue(value);
@@ -76,11 +80,14 @@ export const evaluate = (node: ASTNode | null): Object_ | null => {
   return null;
 };
 
-const evaluateProgram = (program: Program): Object_ | null => {
+const evaluateProgram = (
+  program: Program,
+  env: Environment
+): Object_ | null => {
   let result: Object_ | null = null;
 
   for (const stmt of program.statements) {
-    result = evaluate(stmt);
+    result = evaluate(stmt, env);
     if (result instanceof ReturnValue) {
       return result.value;
     }
@@ -93,11 +100,14 @@ const evaluateProgram = (program: Program): Object_ | null => {
   return result;
 };
 
-const evaluateBlockStatement = (block: ASTBlockStatement): Object_ | null => {
+const evaluateBlockStatement = (
+  block: ASTBlockStatement,
+  env: Environment
+): Object_ | null => {
   let result: Object_ | null = null;
 
   for (const stmt of block.statements) {
-    result = evaluate(stmt);
+    result = evaluate(stmt, env);
     if (result instanceof ReturnValue) {
       return result;
     }
@@ -221,16 +231,17 @@ const evalBooleanInfixExpression = (
 const evaluateIfExpression = (
   condition: ASTExpression | null,
   consequence: ASTBlockStatement | null,
-  alternative: ASTBlockStatement | null
+  alternative: ASTBlockStatement | null,
+  env: Environment
 ): Object_ | null => {
-  const conditionObj = evaluate(condition);
+  const conditionObj = evaluate(condition, env);
   if (conditionObj === null) return null;
   if (isError(conditionObj)) return conditionObj;
 
   if (isTruthy(conditionObj)) {
-    return evaluate(consequence);
+    return evaluate(consequence, env);
   } else if (alternative !== null) {
-    return evaluate(alternative);
+    return evaluate(alternative, env);
   } else return NULL;
 };
 

@@ -2,12 +2,15 @@ import * as fs from "fs";
 import { evaluate } from "../evaluator/evaluator";
 const readline = require("readline");
 import { Lexer } from "../lexer/lexer";
+import { Environment } from "../object/environment";
 import { Parser } from "../parser/parser";
 import { EOF, Token } from "../token/token";
 
 const PROMPT = ">> ";
 
 export const start = async () => {
+  const env = new Environment();
+
   while (true) {
     const input = await prompt();
     const l = new Lexer(input);
@@ -19,9 +22,9 @@ export const start = async () => {
       continue;
     }
 
-    const evaluated = evaluate(program)
+    const evaluated = evaluate(program, env);
     if (evaluated !== null) {
-      console.log(evaluated.inspect())
+      console.log(evaluated.inspect());
     }
   }
 };

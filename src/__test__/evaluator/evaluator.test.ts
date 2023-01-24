@@ -9,6 +9,7 @@ import {
 } from "../../object/object";
 import { Parser } from "../../parser/parser";
 import { evaluate } from "../../evaluator/evaluator";
+import { Environment } from "../../object/environment";
 
 test("整数の評価", () => {
   const tests = [
@@ -170,7 +171,8 @@ const testEval = (input: string): Object_ | null => {
   const l = new Lexer(input);
   const p = new Parser(l);
   const program = p.parseProgram();
-  return evaluate(program);
+  const env = new Environment();
+  return evaluate(program, env);
 };
 
 const testIntegerObject = (obj: Object_, expected: number) => {
