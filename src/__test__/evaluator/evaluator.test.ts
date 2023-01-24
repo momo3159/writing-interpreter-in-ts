@@ -1,5 +1,11 @@
 import { Lexer } from "../../lexer/lexer";
-import { Boolean_, Integer, Null, Object_ } from "../../object/object";
+import {
+  Boolean_,
+  Integer,
+  Null,
+  Object_,
+  ReturnValue,
+} from "../../object/object";
 import { Parser } from "../../parser/parser";
 import { evaluate } from "../../evaluator/evaluator";
 
@@ -96,11 +102,31 @@ test("if-else式の評価", () => {
     if (evaluated === null) throw new Error("null is invalid");
 
     if (expected === null) {
-
       testNullObject(evaluated);
     } else {
       testIntegerObject(evaluated, expected);
     }
+  });
+});
+
+test("return文の評価", () => {
+  const tests = [
+    { input: "return 10;", expected: 10 },
+    { input: "return 10; 9;", expected: 10 },
+    { input: "return 2 * 5; 9;", expected: 10 },
+    { input: "9; return 2 * 5; 9;", expected: 10 },
+    {
+      input: `if (10 > 1) { if (10 > 1) { return 10; }; return 1; }`,
+      expected: 10,
+    },
+  ];
+
+  tests.forEach(({ input, expected }, i) => {
+    const evaluated = testEval(input);
+
+    if (evaluated === null) throw new Error("null is invalid");
+
+    testIntegerObject(evaluated, expected);
   });
 });
 

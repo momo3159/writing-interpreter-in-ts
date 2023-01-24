@@ -1,7 +1,10 @@
-export type ObjectType = "INTEGER" | "BOOLEAN" | "NULL";
+import { RETURN } from "../token/token";
+
+export type ObjectType = "INTEGER" | "BOOLEAN" | "NULL" | "RETURN_VALUE";
 export const INTEGER_OBJ: ObjectType = "INTEGER";
 export const BOOLEAN_OBJ: ObjectType = "BOOLEAN";
 export const NULL_OBJ: ObjectType = "NULL";
+export const RETURN_VALUE_OBJ: ObjectType = "RETURN_VALUE";
 
 export interface Object_ {
   type(): ObjectType;
@@ -42,5 +45,19 @@ export class Null implements Object_ {
   }
   inspect(): string {
     return "null";
+  }
+}
+
+export class ReturnValue implements Object_ {
+  value: Object_;
+  constructor(value: Object_) {
+    this.value = value;
+  }
+
+  type(): ObjectType {
+    return RETURN_VALUE_OBJ;
+  }
+  inspect(): string {
+    return this.value.inspect();
   }
 }

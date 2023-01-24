@@ -10,6 +10,7 @@ import {
   ASTIfExpression,
   ASTBlockStatement,
   ASTExpression,
+  ASTReturnStatement,
 } from "../ast/ast";
 import {
   Boolean_,
@@ -18,6 +19,7 @@ import {
   INTEGER_OBJ,
   Null,
   Object_,
+  ReturnValue,
 } from "../object/object";
 const TRUE = new Boolean_(true);
 const FALSE = new Boolean_(false);
@@ -60,15 +62,24 @@ export const evaluate = (node: ASTNode | null): Object_ | null => {
 
     return evaluateInfixExpression(node.operator, left, right);
   }
+  if (node instanceof ASTReturnStatement) {
+    const value = evaluate(node.returnValue);
+    if (value === null) return null;
+    return new ReturnValue(value);
+  }
 
   return null;
 };
 
 const evaluateStatements = (statements: ASTStatement[]): Object_ | null => {
   let result: Object_ | null = null;
-  statements.forEach((stmt) => {
+
+  for (const stmt of statements) {
     result = evaluate(stmt);
-  });
+    if (result instanceof ReturnValue) {
+      return result.value;
+    }
+  }
 
   return result;
 };
