@@ -15,6 +15,7 @@ import {
 import {
   Boolean_,
   BOOLEAN_OBJ,
+  ErrorObj,
   Integer,
   INTEGER_OBJ,
   Null,
@@ -42,6 +43,7 @@ export const evaluate = (node: ASTNode | null): Object_ | null => {
   if (node instanceof ASTPrefixExpression) {
     const right = evaluate(node.right);
     if (right === null) return null;
+    if (isError(right)) return right;
 
     return evaluatePrefixExpression(node.operator, right);
   }
@@ -59,12 +61,15 @@ export const evaluate = (node: ASTNode | null): Object_ | null => {
     const left = evaluate(node.left);
     const right = evaluate(node.right);
     if (left === null || right === null) return null;
+    if (isError(left)) return left;
+    if (isError(right)) return right;
 
     return evaluateInfixExpression(node.operator, left, right);
   }
   if (node instanceof ASTReturnStatement) {
     const value = evaluate(node.returnValue);
     if (value === null) return null;
+    if (isError(value)) return value;
     return new ReturnValue(value);
   }
 
@@ -79,6 +84,10 @@ const evaluateProgram = (program: Program): Object_ | null => {
     if (result instanceof ReturnValue) {
       return result.value;
     }
+
+    if (result instanceof ErrorObj) {
+      return result;
+    }
   }
 
   return result;
@@ -90,6 +99,9 @@ const evaluateBlockStatement = (block: ASTBlockStatement): Object_ | null => {
   for (const stmt of block.statements) {
     result = evaluate(stmt);
     if (result instanceof ReturnValue) {
+      return result;
+    }
+    if (result instanceof ErrorObj) {
       return result;
     }
   }
@@ -107,7 +119,7 @@ const evaluatePrefixExpression = (
     case "-":
       return evalMinusPrefixExpression(right);
     default:
-      return NULL;
+      return new ErrorObj(`unknown operator: ${operator} ${right.type()}`);
   }
 };
 
@@ -126,7 +138,7 @@ const evalBangOperatorExpression = (right: Object_): Object_ => {
 
 const evalMinusPrefixExpression = (right: Object_): Object_ => {
   if (right.type() !== INTEGER_OBJ) {
-    return NULL;
+    return new ErrorObj(`unknown operator: -${right.type()}`);
   }
   const value = (right as Integer).value;
   return new Integer(-value);
@@ -149,8 +161,14 @@ const evaluateInfixExpression = (
       left as Boolean_,
       right as Boolean_
     );
+  } else if (left.type() !== right.type()) {
+    return new ErrorObj(
+      `type mismatch: ${left.type()} ${operator} ${right.type()}`
+    );
   } else {
-    return NULL;
+    return new ErrorObj(
+      `unknown operator: ${left.type()} ${operator} ${right.type()}`
+    );
   }
 };
 
@@ -177,7 +195,9 @@ const evalIntegerInfixExpression = (
     case "!=":
       return nativeBoolToBoolObj(left.value !== right.value);
     default:
-      return NULL;
+      return new ErrorObj(
+        `unknown operator: ${left.type()} ${operator} ${right.type()}`
+      );
   }
 };
 
@@ -192,7 +212,9 @@ const evalBooleanInfixExpression = (
     case "!=":
       return new Boolean_(left.value !== right.value);
     default:
-      return NULL;
+      return new ErrorObj(
+        `unknown operator: ${left.type()} ${operator} ${right.type()}`
+      );
   }
 };
 
@@ -202,6 +224,8 @@ const evaluateIfExpression = (
   alternative: ASTBlockStatement | null
 ): Object_ | null => {
   const conditionObj = evaluate(condition);
+  if (conditionObj === null) return null;
+  if (isError(conditionObj)) return conditionObj;
 
   if (isTruthy(conditionObj)) {
     return evaluate(consequence);
@@ -226,4 +250,8 @@ const isTruthy = (obj: Object_ | null): boolean => {
 const nativeBoolToBoolObj = (cond: boolean): Boolean_ => {
   if (cond) return TRUE;
   else return FALSE;
+};
+
+const isError = (obj: Object_): boolean => {
+  return obj instanceof ErrorObj;
 };

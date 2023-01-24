@@ -1,6 +1,7 @@
 import { Lexer } from "../../lexer/lexer";
 import {
   Boolean_,
+  ErrorObj,
   Integer,
   Null,
   Object_,
@@ -127,6 +128,41 @@ test("return文の評価", () => {
     if (evaluated === null) throw new Error("null is invalid");
 
     testIntegerObject(evaluated, expected);
+  });
+});
+
+test("エラーハンドリング", () => {
+  const tests = [
+    { input: "5 + true", expectedMessage: "type mismatch: INTEGER + BOOLEAN" },
+    {
+      input: "5 + true; 5;",
+      expectedMessage: "type mismatch: INTEGER + BOOLEAN",
+    },
+    { input: "-true", expectedMessage: "unknown operator: -BOOLEAN" },
+    {
+      input: "true + false",
+      expectedMessage: "unknown operator: BOOLEAN + BOOLEAN",
+    },
+    {
+      input: "5; true + false; 5;",
+      expectedMessage: "unknown operator: BOOLEAN + BOOLEAN",
+    },
+    {
+      input: "if (10 > 1) { true + false }",
+      expectedMessage: "unknown operator: BOOLEAN + BOOLEAN",
+    },
+    {
+      input: "if (10 > 1) { if (10 > 1) { return true + false; } return 1; }",
+      expectedMessage: "unknown operator: BOOLEAN + BOOLEAN",
+    },
+  ];
+
+  tests.forEach(({ input, expectedMessage }) => {
+    const evaluated = testEval(input);
+
+    if (evaluated === null) throw new Error("no error object returned.");
+    expect(evaluated instanceof ErrorObj).toBe(true);
+    expect((evaluated as ErrorObj).message).toBe(expectedMessage);
   });
 });
 

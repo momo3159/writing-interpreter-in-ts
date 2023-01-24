@@ -1,10 +1,14 @@
-import { RETURN } from "../token/token";
-
-export type ObjectType = "INTEGER" | "BOOLEAN" | "NULL" | "RETURN_VALUE";
+export type ObjectType =
+  | "INTEGER"
+  | "BOOLEAN"
+  | "NULL"
+  | "RETURN_VALUE"
+  | "ERROR";
 export const INTEGER_OBJ: ObjectType = "INTEGER";
 export const BOOLEAN_OBJ: ObjectType = "BOOLEAN";
 export const NULL_OBJ: ObjectType = "NULL";
 export const RETURN_VALUE_OBJ: ObjectType = "RETURN_VALUE";
+export const ERROR_OBJ: ObjectType = "ERROR";
 
 export interface Object_ {
   type(): ObjectType;
@@ -59,5 +63,20 @@ export class ReturnValue implements Object_ {
   }
   inspect(): string {
     return this.value.inspect();
+  }
+}
+
+export class ErrorObj implements Object_ {
+  message: string;
+  constructor(message: string) {
+    this.message = message;
+  }
+
+  type(): ObjectType {
+    return ERROR_OBJ;
+  }
+
+  inspect(): string {
+    return `MESSAGE: ${this.message}`;
   }
 }
