@@ -2,6 +2,7 @@ import { Lexer } from "../../lexer/lexer";
 import {
   Boolean_,
   ErrorObj,
+  FunctionObj,
   Integer,
   Null,
   Object_,
@@ -183,6 +184,19 @@ test("let 文の評価", () => {
     testIntegerObject(evaluated, expected);
   });
 });
+
+test("関数リテラルの評価", () => {
+  const input = "fn (x) { x + 2; }";
+  const evaluated = testEval(input);
+  if (evaluated === null) throw new Error("null is invalid");
+
+  expect(evaluated instanceof FunctionObj).toBe(true);
+  const func = evaluated as FunctionObj;
+  expect(func.parameters.length).toBe(1);
+  expect(func.body.String()).toBe("(x + 2)");
+});
+
+
 
 const testEval = (input: string): Object_ | null => {
   const l = new Lexer(input);

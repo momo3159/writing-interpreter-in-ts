@@ -13,12 +13,14 @@ import {
   ASTReturnStatement,
   ASTLetStatement,
   ASTIdentifier,
+  ASTFunctionLiteral,
 } from "../ast/ast";
 import { Environment } from "../object/environment";
 import {
   Boolean_,
   BOOLEAN_OBJ,
   ErrorObj,
+  FunctionObj,
   Integer,
   INTEGER_OBJ,
   Null,
@@ -88,6 +90,11 @@ export const evaluate = (
   }
   if (node instanceof ASTIdentifier) {
     return evaluateIdentifier(node, env);
+  }
+  if (node instanceof ASTFunctionLiteral) {
+    const parameters = node.parameters;
+    const body = node.body;
+    return new FunctionObj(parameters, body, env);
   }
 
   return null;
