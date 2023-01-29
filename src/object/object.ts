@@ -8,7 +8,8 @@ export type ObjectType =
   | "RETURN_VALUE"
   | "ERROR"
   | "FUNCTION"
-  | "STRING";
+  | "STRING"
+  | "BUILTIN";
 export const INTEGER_OBJ: ObjectType = "INTEGER";
 export const BOOLEAN_OBJ: ObjectType = "BOOLEAN";
 export const NULL_OBJ: ObjectType = "NULL";
@@ -16,6 +17,9 @@ export const RETURN_VALUE_OBJ: ObjectType = "RETURN_VALUE";
 export const ERROR_OBJ: ObjectType = "ERROR";
 export const FUNCTION_OBJ: ObjectType = "FUNCTION";
 export const STRING_OBJ: ObjectType = "STRING";
+export const BUILTIN: ObjectType = "BUILTIN";
+
+type BuiltinFunction = (...args: Object_[]) => Object_;
 
 export interface Object_ {
   type(): ObjectType;
@@ -127,3 +131,39 @@ export class StringObj implements Object_ {
     return this.value;
   }
 }
+
+export class Builtin implements Object_ {
+  fn: BuiltinFunction;
+  constructor(fn: BuiltinFunction) {
+    this.fn = fn;
+  }
+
+  type(): ObjectType {
+    return BUILTIN;
+  }
+
+  inspect(): string {
+    return "builtin function";
+  }
+}
+
+export const builtins = new Map<string, Builtin>([
+  [
+    "len",
+    new Builtin((...args: Object_[]): Object_ => {
+      if (args.length !== 1) {
+        return new ErrorObj(
+          `wrong number of arguments. got=${args.length}, want=1`
+        );
+      }
+
+      if (args[0] instanceof StringObj) {
+        return new Integer(args[0].value.length);
+      } else {
+        return new ErrorObj(
+          `argument to \`len\` not supported, got ${args[0].type()}`
+        );
+      }
+    }),
+  ],
+]);

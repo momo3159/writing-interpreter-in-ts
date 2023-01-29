@@ -21,6 +21,8 @@ import { createEnclosedEnvironment, Environment } from "../object/environment";
 import {
   Boolean_,
   BOOLEAN_OBJ,
+  Builtin,
+  builtins,
   ErrorObj,
   FunctionObj,
   Integer,
@@ -315,10 +317,12 @@ const evaluateIfExpression = (
 
 const evaluateIdentifier = (node: ASTIdentifier, env: Environment): Object_ => {
   const { value, exist } = env.get(node.value);
-  if (!exist) {
-    return new ErrorObj(`identifier not found: ${node.value}`);
-  }
-  return value as Object_;
+  if (exist) return value as Object_;
+
+  const builtin = builtins.get(node.value);
+  if (!!builtin) return builtin as Builtin;
+
+  return new ErrorObj(`identifier not found: ${node.value}`);
 };
 
 const evaluateExpressions = (
@@ -343,9 +347,19 @@ const evaluateExpressions = (
 };
 
 const applyFunc = (func: Object_, args: Object_[]): Object_ | null => {
-  if (!(func instanceof FunctionObj)) {
-    throw new Error(`not a function: ${func.type()}`);
+  if (func instanceof FunctionObj) {
+    const extendedEnv = extendFuncEnv(func, args);
+    const evaluated = evaluate(func.body, extendedEnv);
+    return unwrapReturnValue(evaluated);
   }
+
+  if (func instanceof Builtin) {
+    return func.fn(...args);
+  }
+
+  console.log(func);
+
+  throw new Error(`not a function: ${func.type()}`);
 
   /**
    * 関数の持つ環境ではなく，「関数適用時の環境」を拡張して用いた場合どうなるかを考える．（つまり，関数オブジェクトに環境を保持しない形）
@@ -356,9 +370,6 @@ const applyFunc = (func: Object_, args: Object_[]): Object_ | null => {
    *   一方で，関数の持つ環境を描くようする場合，上位の拡張ずみの環境をクロージャは保持する．
    *
    */
-  const extendedEnv = extendFuncEnv(func, args);
-  const evaluated = evaluate(func.body, extendedEnv);
-  return unwrapReturnValue(evaluated);
 };
 
 const extendFuncEnv = (func: FunctionObj, args: Object_[]): Environment => {

@@ -272,6 +272,37 @@ test("文字列結合", () => {
   expect(str.value).toBe("hello world!");
 });
 
+test("組み込み関数の評価", () => {
+  const tests: { input: string; expected: number | string }[] = [
+    { input: `len("");`, expected: 0 },
+    { input: `len("four");`, expected: 4 },
+    { input: `len("hello world");`, expected: 11 },
+    {
+      input: `len(1);`,
+      expected: "argument to `len` not supported, got INTEGER",
+    },
+    {
+      input: `len("one", "two");`,
+      expected: "wrong number of arguments. got=2, want=1",
+    },
+  ];
+
+  for (const { input, expected } of tests) {
+    const evaluated = testEval(input);
+    if (evaluated === null) throw new Error("null is invalid");
+
+    switch (typeof expected) {
+      case "number":
+        testIntegerObject(evaluated, expected);
+        break;
+      case "string":
+        expect(evaluated instanceof ErrorObj).toBe(true);
+        const err = evaluated as ErrorObj;
+        expect(err.message).toBe(expected);
+        break;
+    }
+  }
+});
 const testEval = (input: string): Object_ | null => {
   const l = new Lexer(input);
   const p = new Parser(l);
