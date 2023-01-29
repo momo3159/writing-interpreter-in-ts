@@ -297,7 +297,7 @@ export class ASTStringLiteral implements ASTExpression {
   value: string;
   constructor(token: Token, value: string) {
     this.token = token;
-    this.value = value;
+    this.value = value.substring(0, value.length);
   }
 
   expressionNode(): void {}

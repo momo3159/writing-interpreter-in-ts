@@ -209,7 +209,6 @@ export class Parser {
   }
 
   parseExpressionStatement(): ASTExpressionStatement | null {
-    console.log(this.curToken);
     const token = this.curToken;
     const expression = this.parseExpression(LOWEST);
 
@@ -339,7 +338,6 @@ export class Parser {
   };
 
   parseStringLiteral = (): ASTStringLiteral => {
-    console.log(this.curToken);
     const token = this.curToken;
     const value = this.curToken.literal;
     return new ASTStringLiteral(token, value);

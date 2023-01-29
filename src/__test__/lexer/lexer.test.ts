@@ -94,6 +94,7 @@ describe("nextToken", () => {
     5 != 10;
     "foobar";
     "foo bar";
+    "";
     `;
     const l = new Lexer(input);
     const tests: { expectedKind: TokenKind; expectedLiteral: string }[] = [
@@ -163,9 +164,11 @@ describe("nextToken", () => {
       { expectedKind: INT, expectedLiteral: "10" },
       { expectedKind: SEMICOLON, expectedLiteral: ";" },
 
-      { expectedKind: STRING, expectedLiteral: `"foobar"` },
+      { expectedKind: STRING, expectedLiteral: "foobar" },
       { expectedKind: SEMICOLON, expectedLiteral: ";" },
-      { expectedKind: STRING, expectedLiteral: `"foo bar"` },
+      { expectedKind: STRING, expectedLiteral: "foo bar" },
+      { expectedKind: SEMICOLON, expectedLiteral: ";" },
+      { expectedKind: STRING, expectedLiteral: "" },
       { expectedKind: SEMICOLON, expectedLiteral: ";" },
       { expectedKind: EOF, expectedLiteral: "\0" },
     ];

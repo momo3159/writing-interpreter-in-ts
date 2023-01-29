@@ -384,7 +384,6 @@ describe("parser", () => {
     const program = p.parseProgram();
     checkParserErrors(p);
 
-    console.log(program);
     expect(program.statements.length).toBe(1);
     expect(program.statements[0] instanceof ASTExpressionStatement).toBe(true);
     const stmt = program.statements[0] as ASTExpressionStatement;
@@ -392,7 +391,7 @@ describe("parser", () => {
     expect(stmt.expression instanceof ASTStringLiteral).toBe(true);
     const strLiteral = stmt.expression as ASTStringLiteral;
 
-    testStringLiteral(strLiteral, `"hello, world!"`);
+    testStringLiteral(strLiteral, "hello, world!");
   });
 
   test("String", () => {

@@ -108,7 +108,7 @@ export class Lexer {
         const stringLiteral = this.readStringLiteral();
         if (this.peekChar() === `"`) {
           this.readChar();
-          tok = { kind: STRING, literal: `${stringLiteral}${this.ch}` };
+          tok = { kind: STRING, literal: `${stringLiteral}` };
         } else {
           this.readChar();
           tok = this.newToken(ILLEGAL, this.ch);
@@ -141,7 +141,7 @@ export class Lexer {
       this.readChar();
     }
 
-    return this.input.substring(position, this.position + 1);
+    return this.input.substring(position + 1, this.position + 1);
   }
 
   readChar() {
