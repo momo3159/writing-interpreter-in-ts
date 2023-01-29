@@ -26,6 +26,7 @@ import {
   FALSE,
   EQ,
   NOT_EQ,
+  STRING,
 } from "../../token/token";
 import { Lexer } from "../../lexer/lexer";
 
@@ -91,6 +92,8 @@ describe("nextToken", () => {
     }
     10 == 10;
     5 != 10;
+    "foobar";
+    "foo bar";
     `;
     const l = new Lexer(input);
     const tests: { expectedKind: TokenKind; expectedLiteral: string }[] = [
@@ -158,6 +161,11 @@ describe("nextToken", () => {
       { expectedKind: INT, expectedLiteral: "5" },
       { expectedKind: NOT_EQ, expectedLiteral: "!=" },
       { expectedKind: INT, expectedLiteral: "10" },
+      { expectedKind: SEMICOLON, expectedLiteral: ";" },
+
+      { expectedKind: STRING, expectedLiteral: `"foobar"` },
+      { expectedKind: SEMICOLON, expectedLiteral: ";" },
+      { expectedKind: STRING, expectedLiteral: `"foo bar"` },
       { expectedKind: SEMICOLON, expectedLiteral: ";" },
       { expectedKind: EOF, expectedLiteral: "\0" },
     ];

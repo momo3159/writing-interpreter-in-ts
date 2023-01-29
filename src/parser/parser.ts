@@ -13,6 +13,7 @@ import {
   ASTPrefixExpression,
   ASTReturnStatement,
   ASTStatement,
+  ASTStringLiteral,
   Program,
 } from "../ast/ast";
 import { Lexer } from "../lexer/lexer";
@@ -46,6 +47,7 @@ import {
   ELSE,
   FUNCTION,
   COMMA,
+  STRING,
 } from "../token/token";
 import { iota } from "../util/iota";
 
@@ -82,6 +84,7 @@ export class Parser {
     // IDENTとINTは演算子ではないが，便宜上このような形で実装する
     this.registerPrefix(IDENT, this.parseIdentifier);
     this.registerPrefix(INT, this.parseIntegerLiteral);
+    this.registerPrefix(STRING, this.parseStringLiteral);
     this.registerPrefix(BANG, this.parsePrefixExpression);
     this.registerPrefix(MINUS, this.parsePrefixExpression);
     this.registerPrefix(TRUE, this.parseBooleanLiteral);
@@ -206,6 +209,7 @@ export class Parser {
   }
 
   parseExpressionStatement(): ASTExpressionStatement | null {
+    console.log(this.curToken);
     const token = this.curToken;
     const expression = this.parseExpression(LOWEST);
 
@@ -308,7 +312,7 @@ export class Parser {
 
     return new ASTIfExpression(ifToken, condition, consequence, null);
   };
-  
+
   parseCallExpression = (func: ASTExpression): ASTExpression | null => {
     const token = this.curToken;
     const args = this.parseCallArguments();
@@ -332,6 +336,13 @@ export class Parser {
   parseBooleanLiteral = (): ASTExpression => {
     const exp = new ASTBooleanLiteral(this.curToken, this.curTokenIs(TRUE));
     return exp;
+  };
+
+  parseStringLiteral = (): ASTStringLiteral => {
+    console.log(this.curToken);
+    const token = this.curToken;
+    const value = this.curToken.literal;
+    return new ASTStringLiteral(token, value);
   };
 
   parseFunctionLiteral = (): ASTFunctionLiteral | null => {

@@ -12,6 +12,7 @@ export const [
   // 識別子, リテラル
   IDENT,
   INT,
+  STRING,
   // 演算子
   ASSIGN,
   PLUS,
@@ -44,6 +45,7 @@ export const [
   "EOF",
   "IDENT",
   "INT",
+  "STRING",
   "ASSIGN",
   "PLUS",
   "MINUS",

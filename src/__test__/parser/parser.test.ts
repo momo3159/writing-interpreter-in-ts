@@ -14,6 +14,7 @@ import {
   ASTBlockStatement,
   ASTFunctionLiteral,
   ASTCallExpression,
+  ASTStringLiteral,
 } from "../../ast/ast";
 import { Lexer } from "../../lexer/lexer";
 import { Parser } from "../../parser/parser";
@@ -376,6 +377,24 @@ describe("parser", () => {
     testInfixExpression(exp.args[2] as ASTExpression, 4, "+", 5);
   });
 
+  test("文字列リテラルの解析", () => {
+    const input = `"hello, world!"`;
+    const l = new Lexer(input);
+    const p = new Parser(l);
+    const program = p.parseProgram();
+    checkParserErrors(p);
+
+    console.log(program);
+    expect(program.statements.length).toBe(1);
+    expect(program.statements[0] instanceof ASTExpressionStatement).toBe(true);
+    const stmt = program.statements[0] as ASTExpressionStatement;
+
+    expect(stmt.expression instanceof ASTStringLiteral).toBe(true);
+    const strLiteral = stmt.expression as ASTStringLiteral;
+
+    testStringLiteral(strLiteral, `"hello, world!"`);
+  });
+
   test("String", () => {
     const program = new Program();
     program.statements = [
@@ -414,6 +433,14 @@ const testBooleanLiteral = (s: ASTExpression | null, value: boolean) => {
 
   expect(bool.value).toBe(value);
   expect(bool.tokenLiteral()).toBe(String(value));
+};
+
+const testStringLiteral = (s: ASTExpression | null, value: string) => {
+  expect(s instanceof ASTStringLiteral).toBe(true);
+  const str = s as ASTStringLiteral;
+
+  expect(str.value).toBe(value);
+  expect(str.tokenLiteral()).toBe(`${value}`);
 };
 
 const testIdentifier = (exp: ASTExpression | null, value: string) => {

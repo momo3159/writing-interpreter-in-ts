@@ -19,6 +19,7 @@ import {
   RPAREN,
   SEMICOLON,
   SLASH,
+  STRING,
   Token,
   TokenKind,
 } from "../token/token";
@@ -103,6 +104,16 @@ export class Lexer {
           tok = this.newToken(BANG, this.ch);
         }
         break;
+      case `"`:
+        const stringLiteral = this.readStringLiteral();
+        if (this.peekChar() === `"`) {
+          this.readChar();
+          tok = { kind: STRING, literal: `${stringLiteral}${this.ch}` };
+        } else {
+          this.readChar();
+          tok = this.newToken(ILLEGAL, this.ch);
+        }
+        break;
       case "\0":
         tok = { kind: EOF, literal: "\0" };
         break;
@@ -122,6 +133,15 @@ export class Lexer {
 
     this.readChar();
     return tok;
+  }
+
+  readStringLiteral() {
+    const position = this.position;
+    while (this.peekChar() !== `"` && this.peekChar() !== "\0") {
+      this.readChar();
+    }
+
+    return this.input.substring(position, this.position + 1);
   }
 
   readChar() {

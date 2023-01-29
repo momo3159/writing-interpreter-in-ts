@@ -292,3 +292,19 @@ export class ASTFunctionLiteral implements ASTExpression {
   }
 }
 
+export class ASTStringLiteral implements ASTExpression {
+  token: Token;
+  value: string;
+  constructor(token: Token, value: string) {
+    this.token = token;
+    this.value = value;
+  }
+
+  expressionNode(): void {}
+  tokenLiteral(): string {
+    return this.token.literal;
+  }
+  String(): string {
+    return `"${this.value}"`;
+  }
+}

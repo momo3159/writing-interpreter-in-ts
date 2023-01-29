@@ -1,5 +1,4 @@
 import { ASTBlockStatement, ASTIdentifier } from "../ast/ast";
-import { FUNCTION } from "../token/token";
 import { Environment } from "./environment";
 
 export type ObjectType =
@@ -8,13 +7,15 @@ export type ObjectType =
   | "NULL"
   | "RETURN_VALUE"
   | "ERROR"
-  | "FUNCTION";
+  | "FUNCTION"
+  | "STRING";
 export const INTEGER_OBJ: ObjectType = "INTEGER";
 export const BOOLEAN_OBJ: ObjectType = "BOOLEAN";
 export const NULL_OBJ: ObjectType = "NULL";
 export const RETURN_VALUE_OBJ: ObjectType = "RETURN_VALUE";
 export const ERROR_OBJ: ObjectType = "ERROR";
 export const FUNCTION_OBJ: ObjectType = "FUNCTION";
+export const STRING_OBJ: ObjectType = "STRING";
 
 export interface Object_ {
   type(): ObjectType;
@@ -110,5 +111,19 @@ export class FunctionObj implements Object_ {
     return `fn (${this.parameters.map((p) => p.String()).join(", ")} {
       ${this.body.String()}
     })`;
+  }
+}
+
+export class String implements Object_ {
+  value: string;
+  constructor(value: string) {
+    this.value = value;
+  }
+
+  type(): ObjectType {
+    return STRING_OBJ;
+  }
+  inspect(): string {
+    return this.value;
   }
 }
