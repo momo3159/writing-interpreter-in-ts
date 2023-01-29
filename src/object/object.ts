@@ -114,7 +114,7 @@ export class FunctionObj implements Object_ {
   }
 }
 
-export class String implements Object_ {
+export class StringObj implements Object_ {
   value: string;
   constructor(value: string) {
     this.value = value;

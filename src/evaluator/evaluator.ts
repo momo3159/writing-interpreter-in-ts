@@ -15,6 +15,7 @@ import {
   ASTIdentifier,
   ASTFunctionLiteral,
   ASTCallExpression,
+  ASTStringLiteral,
 } from "../ast/ast";
 import { createEnclosedEnvironment, Environment } from "../object/environment";
 import {
@@ -27,6 +28,7 @@ import {
   Null,
   Object_,
   ReturnValue,
+  StringObj,
 } from "../object/object";
 const TRUE = new Boolean_(true);
 const FALSE = new Boolean_(false);
@@ -117,6 +119,9 @@ export const evaluate = (
     }
 
     return applyFunc(func, args);
+  }
+  if (node instanceof ASTStringLiteral) {
+    return new StringObj(node.value);
   }
   return null;
 };
@@ -321,14 +326,14 @@ const applyFunc = (func: Object_, args: Object_[]): Object_ | null => {
   }
 
   /**
-  * 関数の持つ環境ではなく，「関数適用時の環境」を拡張して用いた場合どうなるかを考える．（つまり，関数オブジェクトに環境を保持しない形）
-  *   例） let newAdder = fn(x) { fn(y) {x + y; } }; let addTwo = newAdder(2); addTwo(2);
-  *   fn(x) {...}(...) の適用時に現在の環境が拡張され， それを元にブロック式が実行される．
-  *  　addTwo の実行時には，「関数適用時の環境を拡張した環境」は失われている． newAdder(2) の "2" にアクセスすることができない．
-  *   
-  *   一方で，関数の持つ環境を描くようする場合，上位の拡張ずみの環境をクロージャは保持する．
-  * 
-  */
+   * 関数の持つ環境ではなく，「関数適用時の環境」を拡張して用いた場合どうなるかを考える．（つまり，関数オブジェクトに環境を保持しない形）
+   *   例） let newAdder = fn(x) { fn(y) {x + y; } }; let addTwo = newAdder(2); addTwo(2);
+   *   fn(x) {...}(...) の適用時に現在の環境が拡張され， それを元にブロック式が実行される．
+   *  　addTwo の実行時には，「関数適用時の環境を拡張した環境」は失われている． newAdder(2) の "2" にアクセスすることができない．
+   *
+   *   一方で，関数の持つ環境を描くようする場合，上位の拡張ずみの環境をクロージャは保持する．
+   *
+   */
   const extendedEnv = extendFuncEnv(func, args);
   const evaluated = evaluate(func.body, extendedEnv);
   return unwrapReturnValue(evaluated);

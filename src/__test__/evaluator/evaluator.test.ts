@@ -7,6 +7,7 @@ import {
   Null,
   Object_,
   ReturnValue,
+  StringObj,
 } from "../../object/object";
 import { Parser } from "../../parser/parser";
 import { evaluate } from "../../evaluator/evaluator";
@@ -247,6 +248,16 @@ test("クロージャの評価", () => {
   const evaluated = testEval(input);
   if (evaluated === null) throw new Error("null is invalid");
   testIntegerObject(evaluated, 4);
+});
+
+test("文字列リテラルの評価", () => {
+  const input = `"hello, world!"`;
+  const evaluated = testEval(input);
+
+  if (evaluated === null) throw new Error("null is invalid");
+  expect(evaluated instanceof StringObj).toBe(true);
+  const result = evaluated as StringObj;
+  expect(result.value).toBe("hello, world!");
 });
 
 const testEval = (input: string): Object_ | null => {
