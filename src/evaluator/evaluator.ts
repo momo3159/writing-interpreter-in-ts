@@ -14,8 +14,9 @@ import {
   ASTLetStatement,
   ASTIdentifier,
   ASTFunctionLiteral,
+  ASTCallExpression,
 } from "../ast/ast";
-import { Environment } from "../object/environment";
+import { createEnclosedEnvironment, Environment } from "../object/environment";
 import {
   Boolean_,
   BOOLEAN_OBJ,
@@ -96,7 +97,27 @@ export const evaluate = (
     const body = node.body;
     return new FunctionObj(parameters, body, env);
   }
+  if (node instanceof ASTCallExpression) {
+    /**
+     * 1. node.func が Identifier のとき
+     *  identifier の評価で，環境に登録されている FunctionObject を取得
+     * 2. node.func が FunctionLiteral のとき
+     *  FunctionLiteral を評価して，FunctionObject を取得
+     */
+    const func = evaluate(node.func, env);
+    if (func === null) return null;
+    if (isError(func)) {
+      return func;
+    }
 
+    const args = evaluateExpressions(node.args, env);
+    if (args === null) return null;
+    if (args.length === 1 && isError(args[0])) {
+      return args[0];
+    }
+
+    return applyFunc(func, args);
+  }
   return null;
 };
 
@@ -271,6 +292,52 @@ const evaluateIdentifier = (node: ASTIdentifier, env: Environment): Object_ => {
     return new ErrorObj(`identifier not found: ${node.value}`);
   }
   return value as Object_;
+};
+
+const evaluateExpressions = (
+  exps: ASTExpression[],
+  env: Environment
+): Object_[] | null => {
+  const result: Object_[] = [];
+
+  for (const exp of exps) {
+    const evaluated = evaluate(exp, env);
+    if (evaluated === null) {
+      return null;
+    }
+    if (isError(evaluated)) {
+      return [evaluated];
+    }
+
+    result.push(evaluated);
+  }
+
+  return result;
+};
+
+const applyFunc = (func: Object_, args: Object_[]): Object_ | null => {
+  if (!(func instanceof FunctionObj)) {
+    throw new Error(`not a function: ${func.type()}`);
+  }
+
+  const extendedEnv = extendFuncEnv(func, args);
+  const evaluated = evaluate(func.body, extendedEnv);
+  return unwrapReturnValue(evaluated);
+};
+
+const extendFuncEnv = (func: FunctionObj, args: Object_[]): Environment => {
+  const env = createEnclosedEnvironment(func.env);
+  func.parameters.forEach((param, idx) => {
+    env.set(param.value, args[idx]);
+  });
+
+  return env;
+};
+
+const unwrapReturnValue = (obj: Object_ | null): Object_ | null => {
+  if (obj === null) return null;
+  if (obj instanceof ReturnValue) return obj.value;
+  return obj;
 };
 
 const isTruthy = (obj: Object_ | null): boolean => {

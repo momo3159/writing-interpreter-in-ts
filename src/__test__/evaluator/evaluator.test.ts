@@ -122,6 +122,25 @@ test("return文の評価", () => {
       input: `if (10 > 1) { if (10 > 1) { return 10; }; return 1; }`,
       expected: 10,
     },
+    {
+      input: `
+        let f = fn(x) {
+          return x;
+          x + 10;
+        };
+        f(10);`,
+      expected: 10,
+    },
+    {
+      input: `
+        let f = fn(x) {
+          let result = x + 10;
+          return result;
+          return 10;
+        };
+        f(10);`,
+      expected: 20,
+    },
   ];
 
   tests.forEach(({ input, expected }, i) => {
@@ -196,7 +215,25 @@ test("関数リテラルの評価", () => {
   expect(func.body.String()).toBe("(x + 2)");
 });
 
+test("関数呼び出しの評価", () => {
+  const tests: { input: string; expected: number }[] = [
+    { input: "let identity = fn(x) { x; }; identity(5)", expected: 5 },
+    { input: "let identity = fn(x) { return x; }; identity(5)", expected: 5 },
+    { input: "let double = fn(x) { x*2; }; double(5)", expected: 10 },
+    { input: "let add = fn(x, y) { x + y; }; add(5, 5)", expected: 10 },
+    {
+      input: "let add = fn(x, y) { x + y; }; add(5 + 5, add(5, 5))",
+      expected: 20,
+    },
+    { input: "fn(x) { x; }(5)", expected: 5 },
+  ];
 
+  for (const { input, expected } of tests) {
+    const evaluated = testEval(input);
+    if (evaluated === null) throw new Error("null is invalid");
+    testIntegerObject(evaluated, expected);
+  }
+});
 
 const testEval = (input: string): Object_ | null => {
   const l = new Lexer(input);

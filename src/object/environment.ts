@@ -2,9 +2,16 @@ import { Object_ } from "./object";
 
 export class Environment {
   store: Map<string, Object_> = new Map();
+  outer: Environment | null;
+  constructor(outer: Environment | null = null) {
+    this.outer = outer;
+  }
 
   get(name: string) {
-    const obj = this.store.get(name);
+    let obj = this.store.get(name);
+    if (!!!obj && this.outer !== null) {
+      obj = this.outer.store.get(name);
+    }
     return { value: obj, exist: !!obj };
   }
 
@@ -13,3 +20,7 @@ export class Environment {
     return obj;
   }
 }
+
+export const createEnclosedEnvironment = (outer: Environment) => {
+  return new Environment(outer);
+};
