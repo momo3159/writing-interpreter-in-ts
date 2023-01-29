@@ -235,6 +235,20 @@ test("関数呼び出しの評価", () => {
   }
 });
 
+test("クロージャの評価", () => {
+  const input = `
+    let newAdder = fn (x) {
+      fn (y) { x + y; }
+    };
+    let addTwo = newAdder(2);
+    addTwo(2);
+  `;
+
+  const evaluated = testEval(input);
+  if (evaluated === null) throw new Error("null is invalid");
+  testIntegerObject(evaluated, 4);
+});
+
 const testEval = (input: string): Object_ | null => {
   const l = new Lexer(input);
   const p = new Parser(l);
