@@ -178,6 +178,10 @@ test("エラーハンドリング", () => {
       expectedMessage: "unknown operator: BOOLEAN + BOOLEAN",
     },
     { input: "foobar", expectedMessage: "identifier not found: foobar" },
+    {
+      input: `"hello" - "world"`,
+      expectedMessage: "unknown operator: STRING - STRING",
+    },
   ];
 
   tests.forEach(({ input, expectedMessage }) => {
@@ -258,6 +262,14 @@ test("文字列リテラルの評価", () => {
   expect(evaluated instanceof StringObj).toBe(true);
   const result = evaluated as StringObj;
   expect(result.value).toBe("hello, world!");
+});
+
+test("文字列結合", () => {
+  const input = `"hello" + " " + "world!"`;
+  const evaluated = testEval(input);
+  if (evaluated === null) throw new Error("null is invalid");
+  const str = evaluated as StringObj;
+  expect(str.value).toBe("hello world!");
 });
 
 const testEval = (input: string): Object_ | null => {

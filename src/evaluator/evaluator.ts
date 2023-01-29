@@ -29,6 +29,7 @@ import {
   Object_,
   ReturnValue,
   StringObj,
+  STRING_OBJ,
 } from "../object/object";
 const TRUE = new Boolean_(true);
 const FALSE = new Boolean_(false);
@@ -217,6 +218,12 @@ const evaluateInfixExpression = (
       left as Boolean_,
       right as Boolean_
     );
+  } else if (left.type() === STRING_OBJ && right.type() === STRING_OBJ) {
+    return evalStringInfixExpression(
+      operator,
+      left as StringObj,
+      right as StringObj
+    );
   } else if (left.type() !== right.type()) {
     return new ErrorObj(
       `type mismatch: ${left.type()} ${operator} ${right.type()}`
@@ -267,6 +274,21 @@ const evalBooleanInfixExpression = (
       return new Boolean_(left.value === right.value);
     case "!=":
       return new Boolean_(left.value !== right.value);
+    default:
+      return new ErrorObj(
+        `unknown operator: ${left.type()} ${operator} ${right.type()}`
+      );
+  }
+};
+
+const evalStringInfixExpression = (
+  operator: string,
+  left: StringObj,
+  right: StringObj
+): StringObj | ErrorObj => {
+  switch (operator) {
+    case "+":
+      return new StringObj(`${left.value}${right.value}`);
     default:
       return new ErrorObj(
         `unknown operator: ${left.type()} ${operator} ${right.type()}`
