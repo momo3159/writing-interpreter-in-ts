@@ -15,6 +15,7 @@ import {
   ASTFunctionLiteral,
   ASTCallExpression,
   ASTStringLiteral,
+  ASTArrayLiteral,
 } from "../../ast/ast";
 import { Lexer } from "../../lexer/lexer";
 import { Parser } from "../../parser/parser";
@@ -392,6 +393,27 @@ describe("parser", () => {
     const strLiteral = stmt.expression as ASTStringLiteral;
 
     testStringLiteral(strLiteral, "hello, world!");
+  });
+
+  test("配列リテラルの解析", () => {
+    const input = "[1, 2 * 2, 3 + 3];";
+    const l = new Lexer(input);
+    const p = new Parser(l);
+    const program = p.parseProgram();
+    checkParserErrors(p);
+
+    expect(program.statements.length).toBe(1);
+
+    expect(program.statements[0] instanceof ASTExpressionStatement).toBe(true);
+    const stmt = program.statements[0] as ASTExpressionStatement;
+
+    expect(stmt.expression instanceof ASTArrayLiteral).toBe(true);
+    const arr = stmt.expression as ASTArrayLiteral;
+
+    expect(arr.elements.length).toBe(3);
+    testIntegerLiteral(arr.elements[0], 1);
+    testInfixExpression(arr.elements[1], 2, "*", 2);
+    testInfixExpression(arr.elements[2], 3, "+", 3);
   });
 
   test("String", () => {

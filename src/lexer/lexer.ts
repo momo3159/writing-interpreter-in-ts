@@ -9,6 +9,7 @@ import {
   ILLEGAL,
   INT,
   LBRACE,
+  LBRACKET,
   lookupIdent,
   LPAREN,
   LT,
@@ -16,6 +17,7 @@ import {
   NOT_EQ,
   PLUS,
   RBRACE,
+  RBRACKET,
   RPAREN,
   SEMICOLON,
   SLASH,
@@ -113,6 +115,12 @@ export class Lexer {
           this.readChar();
           tok = this.newToken(ILLEGAL, this.ch);
         }
+        break;
+      case "[":
+        tok = this.newToken(LBRACKET, this.ch);
+        break;
+      case "]":
+        tok = this.newToken(RBRACKET, this.ch);
         break;
       case "\0":
         tok = { kind: EOF, literal: "\0" };

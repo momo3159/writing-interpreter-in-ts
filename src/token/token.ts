@@ -32,6 +32,8 @@ export const [
   RPAREN,
   LBRACE,
   RBRACE,
+  LBRACKET,
+  RBRACKET,
   // キーワード
   FUNCTION,
   LET,
@@ -62,6 +64,8 @@ export const [
   "RPAREN",
   "LBRACE",
   "RBRACE",
+  "LBRACKET",
+  "RBRACKET",
   "FUNCTION",
   "LET",
   "IF",

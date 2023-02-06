@@ -1,4 +1,5 @@
 import {
+  ASTArrayLiteral,
   ASTBlockStatement,
   ASTBooleanLiteral,
   ASTCallExpression,
@@ -48,6 +49,8 @@ import {
   FUNCTION,
   COMMA,
   STRING,
+  LBRACKET,
+  RBRACKET,
 } from "../token/token";
 import { iota } from "../util/iota";
 
@@ -92,6 +95,7 @@ export class Parser {
     this.registerPrefix(LPAREN, this.parseGroupedExpression);
     this.registerPrefix(IF, this.parseIfExpression);
     this.registerPrefix(FUNCTION, this.parseFunctionLiteral);
+    this.registerPrefix(LBRACKET, this.parseArrayLiteral);
 
     this.registerInfix(PLUS, this.parseInfixExpression);
     this.registerInfix(MINUS, this.parseInfixExpression);
@@ -342,6 +346,39 @@ export class Parser {
     const value = this.curToken.literal;
     return new ASTStringLiteral(token, value);
   };
+
+  parseArrayLiteral = (): ASTArrayLiteral | null => {
+    const token = this.curToken;
+    const elements = this.parseArrayLiteralElements();
+    if (elements === null) return null;
+
+    return new ASTArrayLiteral(token, elements);
+  };
+
+  parseArrayLiteralElements(): ASTExpression[] | null {
+    const elements: ASTExpression[] = [];
+
+    if (this.peekTokenIs(RBRACKET)) {
+      this.nextToken();
+      return elements;
+    }
+
+    this.nextToken();
+    let element = this.parseExpression(LOWEST);
+    if (element === null) return null;
+    elements.push(element);
+
+    while (this.peekTokenIs(COMMA)) {
+      this.nextToken();
+      this.nextToken();
+      element = this.parseExpression(LOWEST);
+      if (element === null) return null;
+      elements.push(element);
+    }
+
+    if (!this.expectPeek(RBRACKET)) return null;
+    else return elements;
+  }
 
   parseFunctionLiteral = (): ASTFunctionLiteral | null => {
     const token = this.curToken;
