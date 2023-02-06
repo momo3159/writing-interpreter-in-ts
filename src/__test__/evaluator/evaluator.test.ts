@@ -1,5 +1,6 @@
 import { Lexer } from "../../lexer/lexer";
 import {
+  ArrayObj,
   Boolean_,
   ErrorObj,
   FunctionObj,
@@ -270,6 +271,20 @@ test("文字列結合", () => {
   if (evaluated === null) throw new Error("null is invalid");
   const str = evaluated as StringObj;
   expect(str.value).toBe("hello world!");
+});
+
+test("配列リテラルの評価", () => {
+  const input = "[1, 2 * 2, 3 + 3]";
+  const evaluated = testEval(input);
+  if (evaluated === null) throw new Error("null is invalid");
+
+  expect(evaluated instanceof ArrayObj).toBe(true)
+  const arr = evaluated as ArrayObj
+
+  expect(arr.elements.length).toBe(3)
+  testIntegerObject(arr.elements[0], 1)
+  testIntegerObject(arr.elements[1], 4)
+  testIntegerObject(arr.elements[2], 6)
 });
 
 test("組み込み関数の評価", () => {

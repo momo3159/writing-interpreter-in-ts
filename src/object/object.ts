@@ -9,7 +9,8 @@ export type ObjectType =
   | "ERROR"
   | "FUNCTION"
   | "STRING"
-  | "BUILTIN";
+  | "BUILTIN"
+  | "ARRAY";
 export const INTEGER_OBJ: ObjectType = "INTEGER";
 export const BOOLEAN_OBJ: ObjectType = "BOOLEAN";
 export const NULL_OBJ: ObjectType = "NULL";
@@ -18,6 +19,7 @@ export const ERROR_OBJ: ObjectType = "ERROR";
 export const FUNCTION_OBJ: ObjectType = "FUNCTION";
 export const STRING_OBJ: ObjectType = "STRING";
 export const BUILTIN: ObjectType = "BUILTIN";
+export const ARRAY: ObjectType = "ARRAY";
 
 type BuiltinFunction = (...args: Object_[]) => Object_;
 
@@ -129,6 +131,20 @@ export class StringObj implements Object_ {
   }
   inspect(): string {
     return this.value;
+  }
+}
+
+export class ArrayObj implements Object_ {
+  elements: Object_[];
+  constructor(elements: Object_[]) {
+    this.elements = elements;
+  }
+
+  type(): ObjectType {
+    return ARRAY;
+  }
+  inspect(): string {
+    return `[${this.elements.map((e) => e.inspect()).join(", ")}]`;
   }
 }
 

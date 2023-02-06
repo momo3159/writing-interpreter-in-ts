@@ -16,9 +16,11 @@ import {
   ASTFunctionLiteral,
   ASTCallExpression,
   ASTStringLiteral,
+  ASTArrayLiteral,
 } from "../ast/ast";
 import { createEnclosedEnvironment, Environment } from "../object/environment";
 import {
+  ArrayObj,
   Boolean_,
   BOOLEAN_OBJ,
   Builtin,
@@ -125,6 +127,15 @@ export const evaluate = (
   }
   if (node instanceof ASTStringLiteral) {
     return new StringObj(node.value);
+  }
+  if (node instanceof ASTArrayLiteral) {
+    const elements = evaluateExpressions(node.elements, env);
+    if (elements === null) return null;
+    if (elements?.length === 1 && isError(elements[0])) {
+      return elements[0];
+    }
+
+    return new ArrayObj(elements);
   }
   return null;
 };
