@@ -8,6 +8,7 @@ import {
   ASTFunctionLiteral,
   ASTIdentifier,
   ASTIfExpression,
+  ASTIndexExpression,
   ASTInfixExpression,
   ASTIntegerLiteral,
   ASTLetStatement,
@@ -57,7 +58,8 @@ import { iota } from "../util/iota";
 export type PrefixParseFn = () => ASTExpression | null;
 export type InfixParseFn = (leftValue: ASTExpression) => ASTExpression | null;
 
-const { LOWEST, EQUALS, LESSGREATER, SUM, PRODUCT, PREFIX, CALL } = iota();
+const { LOWEST, EQUALS, LESSGREATER, SUM, PRODUCT, PREFIX, CALL, INDEX } =
+  iota();
 const PRECEDENCES: ReadonlyMap<TokenKind, number> = new Map([
   [EQ, EQUALS],
   [NOT_EQ, EQUALS],
@@ -68,6 +70,7 @@ const PRECEDENCES: ReadonlyMap<TokenKind, number> = new Map([
   [SLASH, PRODUCT],
   [ASTERISK, PRODUCT],
   [LPAREN, CALL],
+  [LBRACKET, INDEX],
 ]);
 
 export class Parser {
@@ -106,6 +109,7 @@ export class Parser {
     this.registerInfix(LT, this.parseInfixExpression);
     this.registerInfix(GT, this.parseInfixExpression);
     this.registerInfix(LPAREN, this.parseCallExpression);
+    this.registerInfix(LBRACKET, this.parseIndexExpression);
   }
 
   nextToken() {
@@ -449,6 +453,19 @@ export class Parser {
 
     return args;
   }
+
+  parseIndexExpression = (left: ASTExpression): ASTExpression | null => {
+    const token = this.curToken;
+    this.nextToken();
+
+    const index = this.parseExpression(LOWEST);
+    if (index === null) return null;
+    if (!this.expectPeek(RBRACKET)) {
+      return null;
+    }
+
+    return new ASTIndexExpression(token, left, index);
+  };
 
   registerPrefix(tt: TokenKind, fn: PrefixParseFn) {
     this.prefixParseFns.set(tt, fn);

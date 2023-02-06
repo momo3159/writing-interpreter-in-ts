@@ -325,3 +325,23 @@ export class ASTArrayLiteral implements ASTExpression {
     return `[${this.elements.map((e) => e.String()).join(", ")}]`;
   }
 }
+
+export class ASTIndexExpression implements ASTExpression {
+  token: Token;
+  left: ASTExpression;
+  index: ASTExpression;
+
+  constructor(token: Token, left: ASTExpression, index: ASTExpression) {
+    this.token = token;
+    this.left = left;
+    this.index = index;
+  }
+
+  expressionNode(): void {}
+  tokenLiteral(): string {
+    return this.token.literal;
+  }
+  String(): string {
+      return `(${this.left.String()}[${this.index.String()}])`
+  }
+}

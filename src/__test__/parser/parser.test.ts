@@ -16,6 +16,7 @@ import {
   ASTCallExpression,
   ASTStringLiteral,
   ASTArrayLiteral,
+  ASTIndexExpression,
 } from "../../ast/ast";
 import { Lexer } from "../../lexer/lexer";
 import { Parser } from "../../parser/parser";
@@ -225,6 +226,14 @@ describe("parser", () => {
         input: "-(5 + 5)",
         expected: "(-(5 + 5))", // ((-5) + 5)ではない
       },
+      {
+        input: "a * [1, 2, 3, 4][b * c] * d",
+        expected: "((a * ([1, 2, 3, 4][(b * c)])) * d)",
+      },
+      {
+        input: "add(a * b[2], b[1], 2 * [1, 2][1])",
+        expected: "add((a * (b[2])), (b[1]), (2 * ([1, 2][1])))",
+      },
     ];
 
     tests.forEach((tt) => {
@@ -414,6 +423,23 @@ describe("parser", () => {
     testIntegerLiteral(arr.elements[0], 1);
     testInfixExpression(arr.elements[1], 2, "*", 2);
     testInfixExpression(arr.elements[2], 3, "+", 3);
+  });
+
+  test("添字演算子式の解析", () => {
+    const input = "myArray[1 + 1]";
+    const l = new Lexer(input);
+    const p = new Parser(l);
+    const program = p.parseProgram();
+    checkParserErrors(p);
+
+    expect(program.statements[0] instanceof ASTExpressionStatement).toBe(true);
+    const stmt = program.statements[0] as ASTExpressionStatement;
+
+    expect(stmt.expression instanceof ASTIndexExpression).toBe(true);
+    const indexExp = stmt.expression as ASTIndexExpression;
+
+    testIdentifier(indexExp.left, "myArray");
+    testInfixExpression(indexExp.index, 1, "+", 1);
   });
 
   test("String", () => {
