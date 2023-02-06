@@ -175,6 +175,8 @@ export const builtins = new Map<string, Builtin>([
 
       if (args[0] instanceof StringObj) {
         return new Integer(args[0].value.length);
+      } else if (args[0] instanceof ArrayObj) {
+        return new Integer(args[0].elements.length);
       } else {
         return new ErrorObj(
           `argument to \`len\` not supported, got ${args[0].type()}`

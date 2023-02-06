@@ -331,6 +331,9 @@ test("組み込み関数の評価", () => {
       input: `len("one", "two");`,
       expected: "wrong number of arguments. got=2, want=1",
     },
+    { input: "len([1, 2, 3])", expected: 3 },
+    { input: "len([])", expected: 0 },
+
   ];
 
   for (const { input, expected } of tests) {
