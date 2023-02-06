@@ -17,9 +17,11 @@ import {
   ASTCallExpression,
   ASTStringLiteral,
   ASTArrayLiteral,
+  ASTIndexExpression,
 } from "../ast/ast";
 import { createEnclosedEnvironment, Environment } from "../object/environment";
 import {
+  ARRAY,
   ArrayObj,
   Boolean_,
   BOOLEAN_OBJ,
@@ -30,6 +32,7 @@ import {
   Integer,
   INTEGER_OBJ,
   Null,
+  NULL_OBJ,
   Object_,
   ReturnValue,
   StringObj,
@@ -136,6 +139,21 @@ export const evaluate = (
     }
 
     return new ArrayObj(elements);
+  }
+  if (node instanceof ASTIndexExpression) {
+    const left = evaluate(node.left, env);
+    if (left === null) return null;
+    if (isError(left)) {
+      return left;
+    }
+
+    const index = evaluate(node.index, env);
+    if (index === null) return null;
+    if (isError(index)) {
+      return index;
+    }
+
+    return evaluateIndexExpression(left, index);
   }
   return null;
 };
@@ -381,6 +399,28 @@ const applyFunc = (func: Object_, args: Object_[]): Object_ | null => {
    *   一方で，関数の持つ環境を描くようする場合，上位の拡張ずみの環境をクロージャは保持する．
    *
    */
+};
+
+const evaluateIndexExpression = (left: Object_, index: Object_): Object_ => {
+  if (left.type() === ARRAY && index.type() === INTEGER_OBJ) {
+    return evaluateArrayIndexExpression(left as ArrayObj, index as Integer);
+  } else {
+    return new ErrorObj(`index operator not supported: ${left.type()}`);
+  }
+};
+
+const evaluateArrayIndexExpression = (
+  left: ArrayObj,
+  index: Integer
+): Object_ => {
+  const arr = left.elements;
+  const idx = index.value;
+
+  if (idx < 0 || idx >= arr.length) {
+    return NULL;
+  } else {
+    return arr[idx];
+  }
 };
 
 const extendFuncEnv = (func: FunctionObj, args: Object_[]): Environment => {
