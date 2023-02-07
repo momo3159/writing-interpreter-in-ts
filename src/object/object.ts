@@ -196,7 +196,7 @@ export class Hash implements Object_ {
     });
 
     return `{${arr
-      .map(({ value }) => `${value.key.inspect()}: ${value.value.inspect()}}`)
+      .map(({ value }) => `${value.key.inspect()}: ${value.value.inspect()}`)
       .join(", ")}}`;
   }
 }
