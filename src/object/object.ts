@@ -1,6 +1,6 @@
 import { ASTBlockStatement, ASTIdentifier } from "../ast/ast";
 import { Environment } from "./environment";
-
+import { createHash } from "crypto";
 export type ObjectType =
   | "INTEGER"
   | "BOOLEAN"
@@ -10,7 +10,8 @@ export type ObjectType =
   | "FUNCTION"
   | "STRING"
   | "BUILTIN"
-  | "ARRAY";
+  | "ARRAY"
+  | "HASH";
 export const INTEGER_OBJ: ObjectType = "INTEGER";
 export const BOOLEAN_OBJ: ObjectType = "BOOLEAN";
 export const NULL_OBJ: ObjectType = "NULL";
@@ -20,6 +21,7 @@ export const FUNCTION_OBJ: ObjectType = "FUNCTION";
 export const STRING_OBJ: ObjectType = "STRING";
 export const BUILTIN: ObjectType = "BUILTIN";
 export const ARRAY: ObjectType = "ARRAY";
+export const HASH: ObjectType = "HASH";
 
 type BuiltinFunction = (...args: Object_[]) => Object_;
 
@@ -40,6 +42,10 @@ export class Integer implements Object_ {
   inspect(): string {
     return `${this.value}`;
   }
+
+  hashKey(): HashKey {
+    return new HashKey(this.type(), this.value.toString());
+  }
 }
 
 export class Boolean_ implements Object_ {
@@ -53,6 +59,10 @@ export class Boolean_ implements Object_ {
   }
   inspect(): string {
     return `${this.value}`;
+  }
+
+  hashKey(): HashKey {
+    return new HashKey(this.type(), this.value ? "1" : "0");
   }
 }
 
@@ -132,6 +142,13 @@ export class StringObj implements Object_ {
   inspect(): string {
     return this.value;
   }
+
+  hashKey(): HashKey {
+    const hash = createHash("sha256");
+    hash.update(this.value);
+
+    return new HashKey(this.type(), hash.digest("hex"));
+  }
 }
 
 export class ArrayObj implements Object_ {
@@ -160,6 +177,51 @@ export class Builtin implements Object_ {
 
   inspect(): string {
     return "builtin function";
+  }
+}
+
+export class Hash implements Object_ {
+  pairs: Map<string, HashPair>;
+  constructor(pairs: Map<string, HashPair>) {
+    this.pairs = pairs;
+  }
+
+  type(): ObjectType {
+    return HASH;
+  }
+
+  inspect(): string {
+    const arr = Array.from(this.pairs, function (entry) {
+      return { key: entry[0], value: entry[1] };
+    });
+
+    return `{${arr
+      .map(({ value }) => `${value.key.inspect()}: ${value.value.inspect()}}`)
+      .join(", ")}}`;
+  }
+}
+
+export class HashPair {
+  key: Object_;
+  value: Object_;
+
+  constructor(key: Object_, value: Object_) {
+    this.key = key;
+    this.value = value;
+  }
+}
+
+export class HashKey {
+  type: ObjectType;
+  value: string;
+
+  constructor(type: ObjectType, value: string) {
+    this.type = type;
+    this.value = value;
+  }
+
+  toString() {
+    return JSON.stringify(this);
   }
 }
 

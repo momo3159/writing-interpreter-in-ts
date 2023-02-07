@@ -18,6 +18,7 @@ import {
   ASTStringLiteral,
   ASTArrayLiteral,
   ASTIndexExpression,
+  ASTHashLiteral,
 } from "../ast/ast";
 import { createEnclosedEnvironment, Environment } from "../object/environment";
 import {
@@ -29,6 +30,10 @@ import {
   builtins,
   ErrorObj,
   FunctionObj,
+  HASH,
+  Hash,
+  HashKey,
+  HashPair,
   Integer,
   INTEGER_OBJ,
   Null,
@@ -154,6 +159,9 @@ export const evaluate = (
     }
 
     return evaluateIndexExpression(left, index);
+  }
+  if (node instanceof ASTHashLiteral) {
+    return evaluateHashLiteral(node, env);
   }
   return null;
 };
@@ -401,9 +409,48 @@ const applyFunc = (func: Object_, args: Object_[]): Object_ | null => {
    */
 };
 
+const evaluateHashLiteral = (
+  node: ASTHashLiteral,
+  env: Environment
+): Object_ | null => {
+  const pairs = new Map<string, HashPair>();
+
+  for (const [keyNode, valueNode] of node.pairs.entries()) {
+    const key_ = evaluate(keyNode, env);
+
+    if (key_ === null) {
+      return null;
+    }
+    if (isError(key_)) {
+      return key_;
+    }
+
+    if (
+      key_ instanceof StringObj ||
+      key_ instanceof Boolean_ ||
+      key_ instanceof Integer
+    ) {
+      const value = evaluate(valueNode, env);
+      if (value === null) return null;
+      if (isError(value)) {
+        return value;
+      }
+
+      const hashed = key_.hashKey();
+      pairs.set(hashed.toString(), new HashPair(key_, value));
+    } else {
+      return new ErrorObj(`unusable as hash key: ${key_.type()}`);
+    }
+  }
+
+  return new Hash(pairs);
+};
+
 const evaluateIndexExpression = (left: Object_, index: Object_): Object_ => {
   if (left.type() === ARRAY && index.type() === INTEGER_OBJ) {
     return evaluateArrayIndexExpression(left as ArrayObj, index as Integer);
+  } else if (left.type() === HASH) {
+    return evaluateHashIndexExpression(left, index);
   } else {
     return new ErrorObj(`index operator not supported: ${left.type()}`);
   }
@@ -420,6 +467,24 @@ const evaluateArrayIndexExpression = (
     return NULL;
   } else {
     return arr[idx];
+  }
+};
+
+const evaluateHashIndexExpression = (
+  left: Object_,
+  index: Object_
+): Object_ => {
+  const hashObj = left as Hash;
+  if (
+    index instanceof Boolean_ ||
+    index instanceof Integer ||
+    index instanceof StringObj
+  ) {
+    const pair = hashObj.pairs.get(index.hashKey().toString());
+    if (pair == undefined) return NULL;
+    else return pair.value;
+  } else {
+    return new ErrorObj(`unusable as hash key: ${index.type()}`);
   }
 };
 

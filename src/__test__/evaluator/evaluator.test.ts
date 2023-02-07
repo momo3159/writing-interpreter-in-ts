@@ -4,6 +4,8 @@ import {
   Boolean_,
   ErrorObj,
   FunctionObj,
+  Hash,
+  HashKey,
   Integer,
   Null,
   Object_,
@@ -318,6 +320,37 @@ test("配列の添字演算子式の評価", () => {
   }
 });
 
+test("ハッシュリテラルの評価", () => {
+  const input = `
+    let two = "two"
+    {"one": 10 - 9, two: 1 + 1, "thr"+"ee": 6/2, 4: 4, true: 5, false: 6}
+  `;
+
+  const evaluated = testEval(input);
+  if (evaluated === null) throw new Error("null is invalid");
+
+  expect(evaluated instanceof Hash).toBe(true);
+  const result = evaluated as Hash;
+
+  const expected = new Map<HashKey, number>([
+    [new StringObj("one").hashKey(), 1],
+    [new StringObj("two").hashKey(), 2],
+    [new StringObj("three").hashKey(), 3],
+    [new Integer(4).hashKey(), 4],
+    [new Boolean_(true).hashKey(), 5],
+    [new Boolean_(false).hashKey(), 6],
+  ]);
+
+  expect(result.pairs.size).toBe(expected.size);
+  for (const [key, value] of expected.entries()) {
+    const pair = result.pairs.get(key.toString());
+    console.log(result);
+    console.log(key);
+    if (pair == undefined) throw new Error("undefined is invalid");
+    testIntegerObject(pair.value, value);
+  }
+});
+
 test("組み込み関数の評価", () => {
   const tests: { input: string; expected: number | string }[] = [
     { input: `len("");`, expected: 0 },
@@ -333,7 +366,6 @@ test("組み込み関数の評価", () => {
     },
     { input: "len([1, 2, 3])", expected: 3 },
     { input: "len([])", expected: 0 },
-
   ];
 
   for (const { input, expected } of tests) {
