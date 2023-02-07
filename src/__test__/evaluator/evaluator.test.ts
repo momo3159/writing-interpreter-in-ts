@@ -185,6 +185,10 @@ test("エラーハンドリング", () => {
       input: `"hello" - "world"`,
       expectedMessage: "unknown operator: STRING - STRING",
     },
+    {
+      input: `{"name": "Monkey"}[fn(x) {x}]`,
+      expectedMessage: "unusable as hash key: FUNCTION",
+    },
   ];
 
   tests.forEach(({ input, expectedMessage }) => {
@@ -344,10 +348,33 @@ test("ハッシュリテラルの評価", () => {
   expect(result.pairs.size).toBe(expected.size);
   for (const [key, value] of expected.entries()) {
     const pair = result.pairs.get(key.toString());
-    console.log(result);
-    console.log(key);
     if (pair == undefined) throw new Error("undefined is invalid");
     testIntegerObject(pair.value, value);
+  }
+});
+
+test("ハッシュの添字式の評価", () => {
+  const tests: { input: string; expected: any }[] = [
+    { input: '{"foo": 5}["foo"]', expected: 5 },
+    { input: '{"foo": 5}["bar"]', expected: null },
+    { input: 'let key = "foo"; {"foo": 5}[key]', expected: 5 },
+    { input: '{}["foo"]', expected: null },
+    { input: "{5: 5}[5]", expected: 5 },
+    { input: "{true: 5}[true]", expected: 5 },
+    { input: "{false: 5}[false]", expected: 5 },
+  ];
+
+  for (const { input, expected } of tests) {
+    const evaluated = testEval(input);
+    if (evaluated === null) throw new Error("null is invalid");
+
+    if (evaluated instanceof Integer) {
+      testIntegerObject(evaluated, expected);
+    } else if (evaluated instanceof Null) {
+      testNullObject(evaluated);
+    } else {
+      throw new Error(`invalid object type: ${evaluated.type()}`);
+    }
   }
 });
 
