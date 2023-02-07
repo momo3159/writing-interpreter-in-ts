@@ -342,6 +342,27 @@ export class ASTIndexExpression implements ASTExpression {
     return this.token.literal;
   }
   String(): string {
-      return `(${this.left.String()}[${this.index.String()}])`
+    return `(${this.left.String()}[${this.index.String()}])`;
+  }
+}
+
+export class ASTHashLiteral implements ASTExpression {
+  token: Token;
+  pairs: Map<ASTExpression, ASTExpression>;
+  constructor(token: Token, pairs: Map<ASTExpression, ASTExpression>) {
+    this.token = token;
+    this.pairs = pairs;
+  }
+
+  expressionNode(): void {}
+  tokenLiteral(): string {
+    return this.token.literal;
+  }
+  String(): string {
+    const arr = Array.from(this.pairs, function (entry) {
+      return { key: entry[0], value: entry[1] };
+    });
+
+    return `{${arr.map(({ key, value }) => `${key}: ${value}`).join(", ")}}`;
   }
 }

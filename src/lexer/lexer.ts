@@ -2,6 +2,7 @@ import {
   ASSIGN,
   ASTERISK,
   BANG,
+  COLON,
   COMMA,
   EOF,
   EQ,
@@ -121,6 +122,9 @@ export class Lexer {
         break;
       case "]":
         tok = this.newToken(RBRACKET, this.ch);
+        break;
+      case ":":
+        tok = this.newToken(COLON, this.ch);
         break;
       case "\0":
         tok = { kind: EOF, literal: "\0" };

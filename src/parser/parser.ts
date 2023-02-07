@@ -6,6 +6,7 @@ import {
   ASTExpression,
   ASTExpressionStatement,
   ASTFunctionLiteral,
+  ASTHashLiteral,
   ASTIdentifier,
   ASTIfExpression,
   ASTIndexExpression,
@@ -52,6 +53,7 @@ import {
   STRING,
   LBRACKET,
   RBRACKET,
+  COLON,
 } from "../token/token";
 import { iota } from "../util/iota";
 
@@ -99,6 +101,7 @@ export class Parser {
     this.registerPrefix(IF, this.parseIfExpression);
     this.registerPrefix(FUNCTION, this.parseFunctionLiteral);
     this.registerPrefix(LBRACKET, this.parseArrayLiteral);
+    this.registerPrefix(LBRACE, this.parseHashLiteral);
 
     this.registerInfix(PLUS, this.parseInfixExpression);
     this.registerInfix(MINUS, this.parseInfixExpression);
@@ -465,6 +468,36 @@ export class Parser {
     }
 
     return new ASTIndexExpression(token, left, index);
+  };
+
+  parseHashLiteral = (): ASTExpression | null => {
+    const token = this.curToken;
+    const pairs = new Map<ASTExpression, ASTExpression>();
+
+    while (!this.peekTokenIs(RBRACE)) {
+      this.nextToken();
+      const key = this.parseExpression(LOWEST);
+
+      if (!this.expectPeek(COLON)) {
+        return null;
+      }
+
+      this.nextToken();
+      const value = this.parseExpression(LOWEST);
+
+      if (key === null || value === null) return null;
+
+      pairs.set(key, value);
+      if (!this.peekTokenIs(RBRACE) && !this.expectPeek(COMMA)) {
+        return null;
+      }
+    }
+
+    if (!this.expectPeek(RBRACE)) {
+      return null
+    }
+
+    return new ASTHashLiteral(token, pairs)
   };
 
   registerPrefix(tt: TokenKind, fn: PrefixParseFn) {

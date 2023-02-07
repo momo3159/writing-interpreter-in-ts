@@ -27,6 +27,7 @@ export const [
   // デリミタ
   COMMA,
   SEMICOLON,
+  COLON,
   // 記号
   LPAREN,
   RPAREN,
@@ -60,6 +61,7 @@ export const [
   "NOT_EQ",
   "COMMA",
   "SEMICOLON",
+  "COLON",
   "LPAREN",
   "RPAREN",
   "LBRACE",

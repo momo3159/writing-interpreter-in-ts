@@ -17,6 +17,7 @@ import {
   ASTStringLiteral,
   ASTArrayLiteral,
   ASTIndexExpression,
+  ASTHashLiteral,
 } from "../../ast/ast";
 import { Lexer } from "../../lexer/lexer";
 import { Parser } from "../../parser/parser";
@@ -440,6 +441,57 @@ describe("parser", () => {
 
     testIdentifier(indexExp.left, "myArray");
     testInfixExpression(indexExp.index, 1, "+", 1);
+  });
+
+  test("ハッシュリテラルの解析", () => {
+    const input = '{"one": 1, "two": 2, "three": 3}';
+    const l = new Lexer(input);
+    const p = new Parser(l);
+    const program = p.parseProgram();
+    checkParserErrors(p);
+
+    expect(program.statements[0] instanceof ASTExpressionStatement).toBe(true);
+    const stmt = program.statements[0] as ASTExpressionStatement;
+
+    expect(stmt.expression instanceof ASTHashLiteral).toBe(true);
+    const hash = stmt.expression as ASTHashLiteral;
+
+    const arr = Array.from(hash.pairs, function (entry) {
+      return { key: entry[0], value: entry[1] };
+    });
+
+    const isProperty = (
+      value: string
+    ): value is keyof { one: 1; two: 2; three: 3 } => {
+      return value === "one" || value === "two" || value === "three";
+    };
+
+    for (const { key, value } of arr) {
+      expect(key instanceof ASTStringLiteral).toBe(true);
+      let key_ = (key as ASTStringLiteral).String();
+      key_ = key_.substring(1, key_.length - 1);
+      if (isProperty(key_)) {
+        testIntegerLiteral(value, { one: 1, two: 2, three: 3 }[key_]);
+      } else {
+        throw new Error("key is illegal");
+      }
+    }
+  });
+
+  test("空のハッシュリテラルの解析", () => {
+    const input = "{}";
+    const l = new Lexer(input);
+    const p = new Parser(l);
+    const program = p.parseProgram();
+    checkParserErrors(p);
+
+    expect(program.statements[0] instanceof ASTExpressionStatement).toBe(true);
+    const stmt = program.statements[0] as ASTExpressionStatement;
+
+    expect(stmt.expression instanceof ASTHashLiteral).toBe(true);
+    const hash = stmt.expression as ASTHashLiteral;
+
+    expect(hash.pairs.size).toBe(0);
   });
 
   test("String", () => {

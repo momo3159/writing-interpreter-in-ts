@@ -29,6 +29,7 @@ import {
   STRING,
   LBRACKET,
   RBRACKET,
+  COLON,
 } from "../../token/token";
 import { Lexer } from "../../lexer/lexer";
 
@@ -98,6 +99,7 @@ describe("nextToken", () => {
     "foo bar";
     "";
     [1, 2];
+    {"foo": "bar"};
     `;
     const l = new Lexer(input);
     const tests: { expectedKind: TokenKind; expectedLiteral: string }[] = [
@@ -172,7 +174,7 @@ describe("nextToken", () => {
 
       { expectedKind: STRING, expectedLiteral: "foo bar" },
       { expectedKind: SEMICOLON, expectedLiteral: ";" },
-      
+
       { expectedKind: STRING, expectedLiteral: "" },
       { expectedKind: SEMICOLON, expectedLiteral: ";" },
 
@@ -181,6 +183,13 @@ describe("nextToken", () => {
       { expectedKind: COMMA, expectedLiteral: "," },
       { expectedKind: INT, expectedLiteral: "2" },
       { expectedKind: RBRACKET, expectedLiteral: "]" },
+      { expectedKind: SEMICOLON, expectedLiteral: ";" },
+
+      { expectedKind: LBRACE, expectedLiteral: "{" },
+      { expectedKind: STRING, expectedLiteral: "foo" },
+      { expectedKind: COLON, expectedLiteral: ":" },
+      { expectedKind: STRING, expectedLiteral: "bar" },
+      { expectedKind: RBRACE, expectedLiteral: "}" },
       { expectedKind: SEMICOLON, expectedLiteral: ";" },
       { expectedKind: EOF, expectedLiteral: "\0" },
     ];
